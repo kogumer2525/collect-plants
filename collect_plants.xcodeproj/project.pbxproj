@@ -27,11 +27,27 @@
 		21790CBA2F5D58FC00F0453C /* collect_plants.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = collect_plants.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		21790CC72F5D58FE00F0453C /* collect_plantsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = collect_plantsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		21790CD12F5D58FE00F0453C /* collect_plantsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = collect_plantsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA000001AAAA000100000001 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AA000002AAAA000200000002 /* Exceptions for "collect_plants" folder in "collect_plants" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Config/Debug.xcconfig,
+				Config/Debug.xcconfig.sample,
+				Info.plist,
+			);
+			target = 21790CB92F5D58FC00F0453C /* collect_plants */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		21790CBC2F5D58FC00F0453C /* collect_plants */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AA000002AAAA000200000002 /* Exceptions for "collect_plants" folder in "collect_plants" target */,
+			);
 			path = collect_plants;
 			sourceTree = "<group>";
 		};
@@ -79,6 +95,7 @@
 				21790CCA2F5D58FE00F0453C /* collect_plantsTests */,
 				21790CD42F5D58FE00F0453C /* collect_plantsUITests */,
 				21790CBB2F5D58FC00F0453C /* Products */,
+				AA000001AAAA000100000001 /* README.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -271,6 +288,8 @@
 /* Begin XCBuildConfiguration section */
 		21790CD92F5D58FE00F0453C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 21790CBC2F5D58FC00F0453C /* collect_plants */;
+			baseConfigurationReferenceRelativePath = Config/Debug.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -392,6 +411,8 @@
 		};
 		21790CDC2F5D58FE00F0453C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 21790CBC2F5D58FC00F0453C /* collect_plants */;
+			baseConfigurationReferenceRelativePath = Config/Debug.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -400,6 +421,9 @@
 				DEVELOPMENT_TEAM = 38864U9XKW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = collect_plants/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "植物を撮影して識別するためにカメラを使用します";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "植物の発見場所を記録するために位置情報を使用します";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -432,6 +456,9 @@
 				DEVELOPMENT_TEAM = 38864U9XKW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = collect_plants/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "植物を撮影して識別するためにカメラを使用します";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "植物の発見場所を記録するために位置情報を使用します";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -456,6 +483,8 @@
 		};
 		21790CDF2F5D58FE00F0453C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 21790CBC2F5D58FC00F0453C /* collect_plants */;
+			baseConfigurationReferenceRelativePath = Config/Debug.xcconfig;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -500,6 +529,8 @@
 		};
 		21790CE22F5D58FE00F0453C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 21790CBC2F5D58FC00F0453C /* collect_plants */;
+			baseConfigurationReferenceRelativePath = Config/Debug.xcconfig;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
