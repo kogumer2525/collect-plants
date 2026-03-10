@@ -62,7 +62,7 @@ struct PlantRowView: View {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 64, height: 64)
+                    .frame(width: 75, height: 75)
                     .cornerRadius(AppTheme.smallCornerRadius)
                     .clipped()
                     .overlay(
@@ -72,7 +72,7 @@ struct PlantRowView: View {
             } else {
                 RoundedRectangle(cornerRadius: AppTheme.smallCornerRadius)
                     .fill(AppTheme.primaryGreen.opacity(0.3))
-                    .frame(width: 64, height: 64)
+                    .frame(width: 75, height: 75)
                     .overlay(
                         Image(systemName: "leaf.fill")
                             .foregroundColor(AppTheme.accentGreen)
@@ -83,6 +83,9 @@ struct PlantRowView: View {
                 Text(plant.japaneseName.isEmpty ? plant.plantName : plant.japaneseName)
                     .font(.headline)
                     .foregroundColor(AppTheme.darkGreen)
+                Text(plant.plantName)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 Text(plant.locationName.isEmpty ? "場所不明" : plant.locationName)
                     .font(.caption)
                     .foregroundColor(AppTheme.accentGreen)
