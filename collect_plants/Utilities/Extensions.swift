@@ -25,3 +25,16 @@ extension Double {
         String(format: "%.1f%%", self * 100)
     }
 }
+
+extension String {
+    var katakanaToHiragana: String {
+        let mutable = NSMutableString(string: self)
+        CFStringTransform(mutable, nil, kCFStringTransformHiraganaKatakana, true)
+        return String(mutable)
+    }
+    var hiraganaToKatakana: String {
+        let mutable = NSMutableString(string: self)
+        CFStringTransform(mutable, nil, kCFStringTransformHiraganaKatakana, false)
+        return String(mutable)
+    }
+}

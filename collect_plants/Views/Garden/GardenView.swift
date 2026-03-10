@@ -34,7 +34,14 @@ struct GardenView: View {
                 .padding()
             }
             .background(AppTheme.background)
-            .navigationTitle("植物園")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("植物園")
+                        .font(.headline)
+                        .foregroundColor(AppTheme.darkGreen)
+                }
+            }
             .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .onAppear {
