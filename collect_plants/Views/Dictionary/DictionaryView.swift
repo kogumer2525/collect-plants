@@ -27,7 +27,7 @@ struct DictionaryView: View {
                     }
                 } else {
                     List(viewModel.uniquePlants) { plant in
-                        NavigationLink(destination: PlantDetailView(plant: plant)) {
+                        NavigationLink(destination: PlantDetailView(plant: plant, allPlants: viewModel.uniquePlants)) {
                             PlantRowView(plant: plant)
                         }
                         .listRowBackground(AppTheme.cardBackground)
@@ -97,12 +97,29 @@ struct PlantRowView: View {
 }
 
 struct PlantDetailView: View {
-    let plant: PlantRecord
+    let allPlants: [PlantRecord]
+    @State private var currentPlant: PlantRecord
     @State private var viewModel: PlantDetailViewModel
+    @State private var showFullScreenImage = false
 
-    init(plant: PlantRecord) {
-        self.plant = plant
+    init(plant: PlantRecord, allPlants: [PlantRecord]) {
+        self.allPlants = allPlants
+        _currentPlant = State(initialValue: plant)
         _viewModel = State(initialValue: PlantDetailViewModel(plant: plant))
+    }
+
+    private var currentIndex: Int? {
+        allPlants.firstIndex(where: { $0.id == currentPlant.id })
+    }
+
+    private var canMovePrevious: Bool {
+        guard let currentIndex else { return false }
+        return currentIndex > 0
+    }
+
+    private var canMoveNext: Bool {
+        guard let currentIndex else { return false }
+        return currentIndex < allPlants.count - 1
     }
 
     var body: some View {
@@ -136,6 +153,36 @@ struct PlantDetailView: View {
                     .padding(.horizontal, 15)
                     .padding(.top, 12)
                     .padding(.bottom, 16)
+
+                HStack(spacing: 12) {
+                    Button(action: {
+                        moveToPreviousPlant()
+                    }) {
+                        Text("←")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(canMovePrevious ? .white : .secondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(canMovePrevious ? AppTheme.primaryGreen : AppTheme.cardBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .disabled(!canMovePrevious)
+
+                    Button(action: {
+                        moveToNextPlant()
+                    }) {
+                        Text("→")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(canMoveNext ? .white : .secondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(canMoveNext ? AppTheme.primaryGreen : AppTheme.cardBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .disabled(!canMoveNext)
+                }
+                .padding(.horizontal, 15)
+                .padding(.bottom, 20)
             }
         }
         .background(AppTheme.background)
@@ -152,9 +199,32 @@ struct PlantDetailView: View {
         .task {
             await viewModel.fetchWikipediaInfo()
         }
+        .fullScreenCover(isPresented: $showFullScreenImage) {
+            FullScreenImageView(imageData: currentPlant.imageData, isPresented: $showFullScreenImage)
+        }
     }
 
     // MARK: - Book Layout
+
+    private func moveToPreviousPlant() {
+        guard let currentIndex, currentIndex > 0 else { return }
+        let nextPlant = allPlants[currentIndex - 1]
+        currentPlant = nextPlant
+        viewModel = PlantDetailViewModel(plant: nextPlant)
+        Task {
+            await viewModel.fetchWikipediaInfo()
+        }
+    }
+
+    private func moveToNextPlant() {
+        guard let currentIndex, currentIndex < allPlants.count - 1 else { return }
+        let nextPlant = allPlants[currentIndex + 1]
+        currentPlant = nextPlant
+        viewModel = PlantDetailViewModel(plant: nextPlant)
+        Task {
+            await viewModel.fetchWikipediaInfo()
+        }
+    }
 
     private var bookView: some View {
         HStack(alignment: .top, spacing: 0) {
@@ -162,13 +232,13 @@ struct PlantDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.leading, 20)
                 .padding(.trailing, 8)
-                .padding(.vertical, 24)
+                .padding(.vertical, 18)
 
             rightColumn
                 .frame(maxWidth: .infinity)
                 .padding(.leading, 12)
                 .padding(.trailing, 32)
-                .padding(.vertical, 24)
+                .padding(.vertical, 18)
         }
         .background(
             Image("zukan_back")
@@ -183,13 +253,14 @@ struct PlantDetailView: View {
 
     private var leftColumn: some View {
         VStack(spacing: 6) {
-            if !viewModel.japaneseName.isEmpty {
-                Text(viewModel.japaneseName.hiraganaToKatakana)
-                    .font(.custom("craftmincho", size: 20))
-                    .foregroundColor(AppTheme.darkGreen)
-            }
+            Text(viewModel.japaneseName.isEmpty ? " " : viewModel.japaneseName.hiraganaToKatakana)
+                .font(.custom("craftmincho", size: 20))
+                .foregroundColor(AppTheme.darkGreen)
+                .lineLimit(1)
+                .frame(height: 24)
+                .opacity(viewModel.japaneseName.isEmpty ? 0 : 1)
 
-            if let uiImage = UIImage(data: plant.imageData) {
+            if let uiImage = UIImage(data: currentPlant.imageData) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFit()
@@ -201,13 +272,16 @@ struct PlantDetailView: View {
                     )
                     .shadow(color: .black.opacity(0.1), radius: 3, x: 1, y: 2)
                     .padding(.vertical, 4)
+                    .onTapGesture {
+                        showFullScreenImage = true
+                    }
             }
 
-            Text(plant.plantName)
+            Text(currentPlant.plantName)
                 .font(.custom("craftmincho", size: 18))
                 .foregroundColor(AppTheme.darkGreen)
 
-            Text(plant.scientificName)
+            Text(currentPlant.scientificName)
                 .font(.custom("craftmincho", size: 12))
                 .italic()
                 .foregroundColor(.secondary)
@@ -216,7 +290,7 @@ struct PlantDetailView: View {
                 Image(systemName: "checkmark.seal.fill")
                     .foregroundColor(AppTheme.accentGreen)
                     .font(.system(size: 12))
-                Text("信頼度 \(plant.confidence.confidencePercentage)")
+                Text("信頼度 \(currentPlant.confidence.confidencePercentage)")
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
             }
@@ -229,9 +303,9 @@ struct PlantDetailView: View {
     private var rightColumn: some View {
         VStack(alignment: .leading, spacing: 8) {
             zukanInfoRow(icon: "mappin.circle.fill", label: "発見場所",
-                         value: plant.locationName.isEmpty ? "不明" : plant.locationName)
+                         value: currentPlant.locationName.isEmpty ? "不明" : currentPlant.locationName)
             zukanInfoRow(icon: "calendar", label: "発見日",
-                         value: plant.date.formatted(date: .long, time: .shortened))
+                         value: currentPlant.date.formatted(date: .long, time: .shortened))
 
             Divider()
                 .padding(.vertical, 4)
@@ -240,18 +314,21 @@ struct PlantDetailView: View {
                 .font(.custom("craftmincho", size: 15))
                 .foregroundColor(AppTheme.darkGreen)
 
-            if viewModel.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 8)
-            } else {
-                Text(viewModel.plantDescription)
+            ZStack(alignment: .topLeading) {
+                // Keep a stable description area height to prevent layout jumps.
+                Text(viewModel.isLoading ? "読み込み中..." : viewModel.plantDescription)
                     .font(.custom("craftmincho", size: 11))
                     .foregroundColor(.primary.opacity(0.85))
                     .lineSpacing(3)
                     .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if viewModel.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                }
             }
+            .frame(height: 180, alignment: .top)
         }
     }
 
@@ -281,8 +358,8 @@ struct PlantDetailView: View {
             Map(position: .constant(.region(
                 MKCoordinateRegion(
                     center: CLLocationCoordinate2D(
-                        latitude: plant.latitude,
-                        longitude: plant.longitude
+                        latitude: currentPlant.latitude,
+                        longitude: currentPlant.longitude
                     ),
                     span: MKCoordinateSpan(
                         latitudeDelta: 0.05,
@@ -291,8 +368,8 @@ struct PlantDetailView: View {
                 )
             ))) {
                 Annotation("", coordinate: CLLocationCoordinate2D(
-                    latitude: plant.latitude,
-                    longitude: plant.longitude
+                    latitude: currentPlant.latitude,
+                    longitude: currentPlant.longitude
                 )) {
                     Image(systemName: "mappin.circle.fill")
                         .foregroundColor(AppTheme.primaryGreen)
@@ -305,6 +382,46 @@ struct PlantDetailView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(AppTheme.darkGreen, lineWidth: 2)
             )
+        }
+    }
+}
+
+struct FullScreenImageView: View {
+    let imageData: Data
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        ZStack {
+            Color.black
+                .ignoresSafeArea()
+
+            if let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFit()
+                    .ignoresSafeArea()
+            }
+
+            VStack {
+                HStack {
+                    Button(action: {
+                        isPresented = false
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    .padding(.leading, 16)
+                    .padding(.top, 16)
+
+                    Spacer()
+                }
+
+                Spacer()
+            }
         }
     }
 }
