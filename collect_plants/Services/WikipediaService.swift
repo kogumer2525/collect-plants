@@ -91,22 +91,48 @@ class WikipediaService {
     }
 
     private func fetchJapaneseName(scientificName: String) async throws -> String {
-        // 1) 要件通り opensearch を最優先
+        // 1) 学名で英語Wikipediaを検索して正確な英語記事を取得
+        if let enTitle = try await fetchEnglishTitleByOpenSearch(query: scientificName), !enTitle.isEmpty {
+            // 2) その英語記事から日本語のlanglinksを取得 → 最も確実
+            if let jaTitle = try await fetchJapaneseNameByLangLinks(scientificName: enTitle), !jaTitle.isEmpty {
+                return jaTitle
+            }
+        }
+
+        // 3) langlinksで見つからない場合、学名で日本語Wikipediaを試す（最後の手段）
         if let title = try await fetchJapaneseNameByOpenSearch(scientificName: scientificName), !title.isEmpty {
             return title
         }
 
-        // 2) ja の search API にフォールバック
         if let title = try await fetchJapaneseNameByJaSearch(scientificName: scientificName), !title.isEmpty {
             return title
         }
 
-        // 3) en タイトルから ja 言語リンクへフォールバック
-        if let title = try await fetchJapaneseNameByLangLinks(scientificName: scientificName), !title.isEmpty {
-            return title
+        // 見つからない場合は明示的に「日本語名不明」を返す
+        return "日本語名不明"
+    }
+
+    private func fetchEnglishTitleByOpenSearch(query: String) async throws -> String? {
+        var components = URLComponents(string: "https://en.wikipedia.org/w/api.php")
+        components?.queryItems = [
+            URLQueryItem(name: "action", value: "opensearch"),
+            URLQueryItem(name: "search", value: query),
+            URLQueryItem(name: "limit", value: "1"),
+            URLQueryItem(name: "namespace", value: "0"),
+            URLQueryItem(name: "format", value: "json")
+        ]
+        guard let url = components?.url else {
+            throw WikipediaError.invalidURL
         }
 
-        return "不明"
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode) else {
+            return nil
+        }
+
+        let decoded = try JSONDecoder().decode(OpenSearchResponse.self, from: data)
+        return decoded.results.first
     }
 
     private func fetchJapaneseNameByOpenSearch(scientificName: String) async throws -> String? {
@@ -185,7 +211,7 @@ class WikipediaService {
     }
 
     private func fetchDescription(japaneseName: String) async throws -> String {
-        guard japaneseName != "不明" else {
+        guard japaneseName != "日本語名不明" else {
             return "情報を取得できませんでした"
         }
 
