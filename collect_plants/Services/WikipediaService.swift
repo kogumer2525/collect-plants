@@ -99,16 +99,8 @@ class WikipediaService {
             }
         }
 
-        // 3) langlinksで見つからない場合、学名で日本語Wikipediaを試す（最後の手段）
-        if let title = try await fetchJapaneseNameByOpenSearch(scientificName: scientificName), !title.isEmpty {
-            return title
-        }
-
-        if let title = try await fetchJapaneseNameByJaSearch(scientificName: scientificName), !title.isEmpty {
-            return title
-        }
-
-        // 見つからない場合は明示的に「日本語名不明」を返す
+        // langlinksで見つからない場合は、日本語Wikipediaの検索はスキップして「日本語名不明」を返す
+        // 無関係な日本語記事がヒットするのを防ぐため
         return "日本語名不明"
     }
 
