@@ -43,6 +43,53 @@ struct DictionaryView: View {
                         .font(.headline)
                         .foregroundColor(AppTheme.darkGreen)
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button(action: {
+                            viewModel.sortOption = .dateNewest
+                        }) {
+                            HStack {
+                                Text(SortOption.dateNewest.label)
+                                if viewModel.sortOption == .dateNewest {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                        Button(action: {
+                            viewModel.sortOption = .japaneseNameAscending
+                        }) {
+                            HStack {
+                                Text(SortOption.japaneseNameAscending.label)
+                                if viewModel.sortOption == .japaneseNameAscending {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                        Button(action: {
+                            viewModel.sortOption = .englishNameAscending
+                        }) {
+                            HStack {
+                                Text(SortOption.englishNameAscending.label)
+                                if viewModel.sortOption == .englishNameAscending {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                        Button(action: {
+                            viewModel.sortOption = .locationAscending
+                        }) {
+                            HStack {
+                                Text(SortOption.locationAscending.label)
+                                if viewModel.sortOption == .locationAscending {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down")
+                            .foregroundColor(AppTheme.darkGreen)
+                    }
+                }
             }
             .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
