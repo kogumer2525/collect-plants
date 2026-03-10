@@ -39,7 +39,7 @@ struct DictionaryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("図鑑")
+                    Text("植物図鑑")
                         .font(.headline)
                         .foregroundColor(AppTheme.darkGreen)
                 }
@@ -80,16 +80,15 @@ struct PlantRowView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(plant.plantName)
+                Text(plant.japaneseName.isEmpty ? plant.plantName : plant.japaneseName)
                     .font(.headline)
                     .foregroundColor(AppTheme.darkGreen)
-                Text(plant.scientificName)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .italic()
                 Text(plant.locationName.isEmpty ? "場所不明" : plant.locationName)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(AppTheme.accentGreen)
+                Text(plant.date.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
         }
         .padding(.vertical, 6)

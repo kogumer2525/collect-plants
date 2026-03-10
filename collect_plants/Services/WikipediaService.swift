@@ -78,7 +78,7 @@ class WikipediaService {
     private init() {}
 
     func fetchPlantInfo(scientificName: String) async throws -> WikipediaPlantInfo {
-        // Step 1: Wikipedia opensearch APIで日本語名を取得
+        // Step 1: Wikipedia apiで日本語名を取得
         let japaneseName = try await fetchJapaneseName(scientificName: scientificName)
 
         // Step 2: Wikipedia summary APIで解説文を取得
