@@ -5,7 +5,7 @@
 ## 機能
 
 - **探す** - カメラで植物を撮影し、PlantNet AIで種類を識別
-- **図鑑** - 識別・登録した植物を一覧・詳細表示
+- **図鑑** - 識別・登録した植物を一覧・詳細表示（一覧の並び替え、日本語名/英名表示、詳細の地図・写真拡大・前後移動・Wikipedia解説）
 - **マップ** - 発見した植物を地図上にマッピング
 - **植物園** - 登録した植物をコレクションとして展示
 
@@ -46,6 +46,7 @@ collect_plants/
 ├── ViewModels/
 │   ├── ExploreViewModel.swift       # 撮影・識別・登録の状態管理
 │   ├── DictionaryViewModel.swift    # 図鑑一覧の状態管理
+│   ├── PlantDetailViewModel.swift   # 図鑑詳細のWikipedia情報取得・状態管理
 │   ├── MapViewModel.swift           # 地図表示の状態管理
 │   └── GardenViewModel.swift        # 植物園の状態管理
 │
@@ -54,7 +55,7 @@ collect_plants/
 │   │   ├── ExploreView.swift        # カメラ撮影・識別結果表示画面
 │   │   └── CameraPreviewView.swift  # AVCaptureSession のプレビュー表示
 │   ├── Dictionary/
-│   │   └── DictionaryView.swift     # 登録済み植物の図鑑一覧
+│   │   └── DictionaryView.swift     # 登録済み植物の図鑑一覧・詳細
 │   ├── Map/
 │   │   └── MapView.swift            # 発見場所のマップ表示
 │   └── Garden/
@@ -65,6 +66,7 @@ collect_plants/
 │   ├── PlantNetService.swift        # PlantNet API への画像送信・識別
 │   ├── LocationService.swift        # 位置情報取得・逆ジオコーディング
 │   ├── CoreDataService.swift        # CoreData への保存・取得
+│   ├── WikipediaService.swift       # Wikipedia から和名・解説文を取得
 │   ├── HealthKitService.swift       # 歩数取得 (未実装)
 │   └── AnimalEventService.swift     # 動物来訪イベント (未実装)
 │
