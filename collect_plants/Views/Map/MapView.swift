@@ -36,7 +36,14 @@ struct PlantMapView: View {
                     }
                 }
             }
-            .navigationTitle("マップ")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("マップ")
+                        .font(.headline)
+                        .foregroundColor(AppTheme.darkGreen)
+                }
+            }
             .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .onAppear {

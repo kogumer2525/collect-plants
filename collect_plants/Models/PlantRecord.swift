@@ -13,6 +13,7 @@ public class PlantRecord: NSManagedObject, Identifiable {
     @NSManaged public var growthLevel: Int16
     @NSManaged public var confidence: Double
     @NSManaged public var locationName: String
+    @NSManaged public var japaneseName: String
 }
 
 extension PlantRecord {

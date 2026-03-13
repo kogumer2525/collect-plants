@@ -60,7 +60,10 @@ class ExploreViewModel {
 
         do {
             async let locationNameTask = locationService.reverseGeocode(location: location)
+            async let wikiInfoTask = WikipediaService.shared.fetchPlantInfo(scientificName: candidate.scientificName)
+            
             let locationName = try await locationNameTask
+            let wikiInfo = try await wikiInfoTask
 
             _ = coreDataService.savePlantRecord(
                 plantName: candidate.plantName,
@@ -69,7 +72,8 @@ class ExploreViewModel {
                 latitude: location.coordinate.latitude,
                 longitude: location.coordinate.longitude,
                 locationName: locationName,
-                confidence: candidate.score
+                confidence: candidate.score,
+                japaneseName: wikiInfo.japaneseName
             )
 
             resetState()

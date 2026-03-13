@@ -2,13 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>NSCameraUsageDescription</key>
-    <string>植物を撮影して識別するためにカメラを使用します</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>植物の発見場所を記録するために位置情報を使用します</string>
-    <key>NSHealthShareUsageDescription</key>
-    <string>歩数ポイントを計算するためにヘルスケアデータを使用します</string>
-    <key>PLANTNET_API_KEY</key>
-    <string>$(PLANTNET_API_KEY)</string>
+	<key>PLANTNET_API_KEY</key>
+	<string>$(PLANTNET_API_KEY)</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>craftmincho.otf</string>
+	</array>
 </dict>
 </plist>
