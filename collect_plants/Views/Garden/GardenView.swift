@@ -51,34 +51,78 @@ struct GardenView: View {
     }
 
     private var headerSection: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                .fill(AppTheme.headerGradient)
-                .shadow(color: AppTheme.accentGreen.opacity(0.2), radius: 8, x: 0, y: 3)
+        VStack(spacing: 16) {
+            // Plants Count
+            ZStack {
+                RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                    .fill(AppTheme.headerGradient)
+                    .shadow(color: AppTheme.accentGreen.opacity(0.2), radius: 8, x: 0, y: 3)
 
-            VStack(spacing: 6) {
-                HStack(alignment: .bottom, spacing: 4) {
-                    Text("\(viewModel.uniquePlants.count)")
-                        .font(.system(size: 56, weight: .bold))
-                        .foregroundColor(AppTheme.darkGreen)
-                    Text("種")
-                        .font(.title2.bold())
-                        .foregroundColor(AppTheme.darkGreen)
-                        .padding(.bottom, 8)
-                }
-                Text("の植物を展示中")
-                    .font(.subheadline)
-                    .foregroundColor(AppTheme.darkGreen.opacity(0.7))
+                VStack(spacing: 6) {
+                    HStack(alignment: .bottom, spacing: 4) {
+                        Text("\(viewModel.uniquePlants.count)")
+                            .font(.system(size: 56, weight: .bold))
+                            .foregroundColor(AppTheme.darkGreen)
+                        Text("種")
+                            .font(.title2.bold())
+                            .foregroundColor(AppTheme.darkGreen)
+                            .padding(.bottom, 8)
+                    }
+                    Text("の植物を展示中")
+                        .font(.subheadline)
+                        .foregroundColor(AppTheme.darkGreen.opacity(0.7))
 
-                HStack(spacing: 4) {
-                    ForEach(0..<min(viewModel.uniquePlants.count, 5), id: \.self) { _ in
-                        Image(systemName: "leaf.fill")
-                            .font(.caption)
-                            .foregroundColor(AppTheme.accentGreen)
+                    HStack(spacing: 4) {
+                        ForEach(0..<min(viewModel.uniquePlants.count, 5), id: \.self) { _ in
+                            Image(systemName: "leaf.fill")
+                                .font(.caption)
+                                .foregroundColor(AppTheme.accentGreen)
+                        }
                     }
                 }
+                .padding(.vertical, 20)
             }
-            .padding(.vertical, 20)
+
+            // Points Card
+            NavigationLink(destination: ItemShopView()) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "wallet.pass.fill")
+                                .font(.title3)
+                                .foregroundColor(AppTheme.accentGreen)
+                            Text("所持ポイント")
+                                .font(.subheadline)
+                                .foregroundColor(AppTheme.darkGreen)
+                        }
+                        HStack(spacing: 4) {
+                            Text("\(viewModel.totalPoints)")
+                                .font(.system(size: 40, weight: .bold))
+                                .foregroundColor(AppTheme.darkGreen)
+                            Text("P")
+                                .font(.headline)
+                                .foregroundColor(AppTheme.darkGreen.opacity(0.7))
+                                .padding(.top, 6)
+                        }
+                    }
+                    Spacer()
+                    VStack(spacing: 4) {
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(AppTheme.darkGreen)
+                        Text("交換")
+                            .font(.caption)
+                            .foregroundColor(AppTheme.darkGreen)
+                    }
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.smallCornerRadius)
+                        .fill(AppTheme.primaryGradient)
+                        .shadow(color: AppTheme.accentGreen.opacity(0.15), radius: 6, x: 0, y: 2)
+                )
+            }
+            .foregroundColor(.primary)
         }
     }
 
