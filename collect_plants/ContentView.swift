@@ -58,6 +58,13 @@ struct ContentView: View {
                 }
         }
         .tint(AppTheme.tabBarTint)
+        .onAppear {
+            // アプリ起動時に過去日分のポイントを遡及計算
+            Task {
+                let tempViewModel = MapViewModel()
+                await tempViewModel.captureHistoricalSteps()
+            }
+        }
     }
 }
 
