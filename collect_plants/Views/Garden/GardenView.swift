@@ -4,49 +4,110 @@ struct GardenView: View {
     @State private var viewModel = GardenViewModel()
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    headerSection
+        ZStack {
+            // 背景グラデーション
+            LinearGradient(
+                colors: [
+                    Color(red: 0.42, green: 0.65, blue: 0.35),
+                    Color(red: 0.55, green: 0.78, blue: 0.42),
+                    Color(red: 0.48, green: 0.72, blue: 0.38)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                    if viewModel.uniquePlants.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "tree.fill")
-                                .font(.system(size: 64))
-                                .foregroundColor(AppTheme.primaryGreen)
-                            Text("植物園はまだ空です")
+            // MARK: - 庭グリッド（画面いっぱい・背景として配置）
+            GardenGridView(
+                plantCount: viewModel.gardenPlantCount,
+                ownedFurnitureIDs: viewModel.ownedFurnitureIDs,
+                critters: viewModel.gardenCritters
+            )
+            .ignoresSafeArea(edges: .bottom)
+
+            // MARK: - UI オーバーレイ
+            VStack(spacing: 0) {
+                VStack(spacing: 8) {
+                    // タイトルバー
+                    HStack {
+                        Text("庭")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Spacer()
+                        Text("🌿 \(viewModel.uniquePlants.count)種")
+                            .font(.caption.bold())
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(.ultraThinMaterial))
+                    }
+                    .padding(.horizontal, 16)
+
+                    // レベル・ポイントバー
+                    GardenLevelView(
+                        points: viewModel.points,
+                        level: viewModel.level,
+                        nextLevelPoints: viewModel.nextLevelPoints
+                    )
+                }
+                .padding(.top, 4)
+                .padding(.bottom, 8)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.25),
+                            Color.black.opacity(0.0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+
+                Spacer()
+
+                // 植物ゼロ時の案内
+                if viewModel.uniquePlants.isEmpty {
+                    VStack(spacing: 12) {
+                        Text("🌱")
+                            .font(.system(size: 48))
+                        Text("植物を登録すると\n庭に植物が咲きます")
+                            .font(.subheadline)
+                            .foregroundColor(AppTheme.darkGreen)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(24)
+                    .background(RoundedRectangle(cornerRadius: 16).fill(.ultraThinMaterial))
+                    Spacer()
+                }
+
+                // 動物来訪バナー
+                if let animal = viewModel.visitingAnimal {
+                    HStack(spacing: 12) {
+                        Text(animal)
+                            .font(.system(size: 36))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("来訪者")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("やってきました！")
                                 .font(.headline)
                                 .foregroundColor(AppTheme.darkGreen)
-                            Text("植物を登録すると、ここに植物園が作られます")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
                         }
-                        .padding(40)
-                    } else {
-                        gardenGrid
+                        Spacer()
                     }
-
-                    if let animal = viewModel.visitingAnimal {
-                        animalSection(animal: animal)
-                    }
-                }
-                .padding()
-            }
-            .background(AppTheme.background)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("植物園")
-                        .font(.headline)
-                        .foregroundColor(AppTheme.darkGreen)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                            .fill(AppTheme.paleYellow)
+                            .shadow(color: Color.yellow.opacity(0.2), radius: 6, x: 0, y: 2)
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
                 }
             }
-            .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .onAppear {
-                viewModel.loadGarden()
-            }
+        }
+        .onAppear {
+            viewModel.loadGarden()
         }
     }
 
@@ -125,75 +186,8 @@ struct GardenView: View {
             .foregroundColor(.primary)
         }
     }
+}
 
-    private var gardenGrid: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: 16) {
-            ForEach(viewModel.uniquePlants) { plant in
-                VStack(spacing: 6) {
-                    ZStack {
-                        Circle()
-                            .fill(AppTheme.primaryGreen.opacity(0.25))
-                            .frame(width: 88, height: 88)
-                        if let uiImage = UIImage(data: plant.imageData) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(AppTheme.primaryGreen, lineWidth: 2)
-                                )
-                        } else {
-                            Circle()
-                                .fill(AppTheme.primaryGreen.opacity(0.4))
-                                .frame(width: 80, height: 80)
-                                .overlay(
-                                    Image(systemName: "leaf.fill")
-                                        .font(.title2)
-                                        .foregroundColor(AppTheme.accentGreen)
-                                )
-                        }
-                    }
-                    Text(plant.plantName)
-                        .font(.caption.bold())
-                        .foregroundColor(AppTheme.darkGreen)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(8)
-                .background(
-                    RoundedRectangle(cornerRadius: AppTheme.smallCornerRadius)
-                        .fill(AppTheme.cardBackground)
-                        .shadow(color: AppTheme.accentGreen.opacity(0.1), radius: 4, x: 0, y: 2)
-                )
-            }
-        }
-    }
-
-    private func animalSection(animal: String) -> some View {
-        HStack(spacing: 16) {
-            Text(animal)
-                .font(.system(size: 40))
-            VStack(alignment: .leading, spacing: 4) {
-                Text("来訪者")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text("やってきました！")
-                    .font(.headline)
-                    .foregroundColor(AppTheme.darkGreen)
-            }
-            Spacer()
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                .fill(AppTheme.paleYellow)
-                .shadow(color: Color.yellow.opacity(0.15), radius: 6, x: 0, y: 2)
-        )
-    }
+#Preview {
+    GardenView()
 }

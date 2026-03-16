@@ -70,4 +70,32 @@ class CoreDataService {
         let uniqueNames = Set(plants.map { $0.plantName })
         return uniqueNames.count
     }
+
+    // MARK: - Furniture
+
+    func purchaseFurniture(furnitureID: String, name: String, emoji: String) -> FurnitureRecord {
+        let record = FurnitureRecord(context: context)
+        record.id = UUID()
+        record.furnitureID = furnitureID
+        record.name = name
+        record.emoji = emoji
+        record.purchasedDate = Date()
+        save()
+        return record
+    }
+
+    func fetchAllFurniture() -> [FurnitureRecord] {
+        let request = FurnitureRecord.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \FurnitureRecord.purchasedDate, ascending: true)]
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Fetch furniture error: \(error)")
+            return []
+        }
+    }
+
+    func ownedFurnitureIDs() -> Set<String> {
+        Set(fetchAllFurniture().map { $0.furnitureID })
+    }
 }

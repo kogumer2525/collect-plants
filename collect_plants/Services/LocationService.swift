@@ -34,11 +34,10 @@ class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
             return "不明な場所"
         }
         let mapItems = try await request.mapItems
-        guard let placemark = mapItems.first?.placemark else {
+        guard let address = mapItems.first?.address else {
             return "不明な場所"
         }
-        let components = [placemark.locality, placemark.subLocality].compactMap { $0 }
-        return components.isEmpty ? (placemark.title ?? "不明な場所") : components.joined(separator: " ")
+        return address.shortAddress ?? address.fullAddress
     }
 
     // MARK: - CLLocationManagerDelegate

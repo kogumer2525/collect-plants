@@ -54,7 +54,7 @@ struct ContentView: View {
 
             GardenView()
                 .tabItem {
-                    Label("植物園", systemImage: "tree.fill")
+                    Label("庭", systemImage: "tree.fill")
                 }
         }
         .tint(AppTheme.tabBarTint)
