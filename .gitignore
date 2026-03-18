@@ -6,3 +6,5 @@ build/
 
 # API Keys
 collect_plants/Config/Debug.xcconfig
+
+.claude/

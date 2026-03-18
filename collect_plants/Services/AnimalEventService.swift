@@ -103,7 +103,7 @@ class AnimalEventService: ObservableObject {
     func checkForAnimalVisit(plantSpeciesCount: Int, level: Int) {
         let animalCount = max(0, level - 1)
 
-        var rng = SeededRandomNumberGenerator(seed: 123)
+        var rng = SeededRandomNumberGenerator(seed: UInt64(Date().timeIntervalSince1970))
         let allTypes = CritterType.allCases
 
         var critters: [GardenCritter] = []

@@ -38,7 +38,7 @@ struct CritterView: View {
     @State private var isInitialized = false
 
     private let animationInterval: TimeInterval = 0.15
-    private let moveInterval: TimeInterval = 3.0
+    private let moveInterval: TimeInterval = 9.0
 
     var body: some View {
         let assetName = critter.type.assetName(direction: direction, animation: animation)
@@ -78,20 +78,15 @@ struct CritterView: View {
     }
 
     private func startMovementTimer() {
-        // 初回はランダムな遅延で開始（一斉に動かない）
         let initialDelay = Double(critter.id) * 0.8 + 1.0
         DispatchQueue.main.asyncAfter(deadline: .now() + initialDelay) {
             moveToNextTile()
-            Timer.scheduledTimer(withTimeInterval: moveInterval, repeats: true) { _ in
-                moveToNextTile()
-            }
         }
     }
 
     private func moveToNextTile() {
         guard !dirtTilePositions.isEmpty else { return }
 
-        // 近くのdirtタイルからランダムに次の目的地を選ぶ
         let nearbyTiles = dirtTilePositions.filter { tile in
             let dx = tile.x - position.x
             let dy = tile.y - position.y
@@ -110,7 +105,6 @@ struct CritterView: View {
 
         targetPosition = CGPoint(x: target.x, y: target.y)
 
-        // 方向を決定
         let dx = targetPosition.x - position.x
         let dy = targetPosition.y - position.y
         if dx > 0 && dy > 0 {
@@ -123,19 +117,16 @@ struct CritterView: View {
             direction = .NW
         }
 
-        // walk アニメーションに切り替え
         animation = .walk
         currentFrame = 0
 
-        // アニメーション付き移動
-        withAnimation(.easeInOut(duration: moveInterval * 0.8)) {
+        withAnimation(.easeInOut(duration: moveInterval)) {
             position = targetPosition
         }
 
-        // 到着後にidleに戻す
-        DispatchQueue.main.asyncAfter(deadline: .now() + moveInterval * 0.8) {
-            animation = .idle
-            currentFrame = 0
+        // 到着後すぐ次の移動へ（停止なし）
+        DispatchQueue.main.asyncAfter(deadline: .now() + moveInterval) {
+            moveToNextTile()
         }
     }
 }

@@ -17,6 +17,12 @@ enum TileType: Equatable {
     case stonePath
     case water
     case waterEdge
+    case lake           // 湖（tile_104）
+    case lakeDeep       // 湖（tile_106）
+    case lakeSide       // 湖に一番近い草（tile_040）
+    case lakeEdge       // 湖の周り（tile_003）
+    case lakeEdgeOuter  // さらに外側（tile_009）
+    case dirtFlat       // 平らな土（tile_018）
 
     var assetName: String {
         switch self {
@@ -30,11 +36,17 @@ enum TileType: Equatable {
         case .grassLush:    return "tile_040"
         case .grassBush:    return "tile_033"
         case .grassFlower:  return "tile_037"
-        case .path:         return "tile_007"
+        case .path:         return "tile_063"
         case .pathEdge:     return "tile_016"
         case .stonePath:    return "tile_061"
         case .water:        return "tile_095"
         case .waterEdge:    return "tile_069"
+        case .lake:         return "tile_104"
+        case .lakeDeep:     return "tile_106"
+        case .lakeSide:     return "tile_040"
+        case .lakeEdge:     return "tile_003"
+        case .lakeEdgeOuter: return "tile_009"
+        case .dirtFlat:      return "tile_018"
         }
     }
 
@@ -58,6 +70,17 @@ enum TileType: Equatable {
         }
     }
 
+    /// 凹み量（y座標を下にずらす倍率、tileH基準）
+    var depthOffset: CGFloat {
+        switch self {
+        case .lake, .lakeDeep, .lakeSide, .lakeEdge: return 0.5
+        case .lakeEdgeOuter:                          return 0.1
+        case .dirtFlat:                               return 0.5
+        case .path:                                   return -0.4
+        default:                                      return 0.0
+        }
+    }
+
     /// 動物が出現するタイル（dirt のみ）
     var canSpawnAnimal: Bool {
         switch self {
@@ -65,6 +88,14 @@ enum TileType: Equatable {
             return true
         default:
             return false
+        }
+    }
+
+    /// 動物が歩けるタイル（GL と P のみ）
+    var canWalk: Bool {
+        switch self {
+        case .grassLight, .path: return true
+        default: return false
         }
     }
 }
@@ -77,9 +108,30 @@ enum TileDecoration: Equatable {
     case bush
     case tallGrass
     case log
+    case logCross   // 丸太十字 (tile_049)
+    case logSide    // 丸太横   (tile_051)
+    case logBack    // 丸太後ろ (tile_052)
     case stump
     case rockSmall
     case rockLarge
+    case dirt1      // tile_053
+    case dirt2      // tile_054
+    case dirt3      // tile_055
+    case dirt4      // tile_056
+    case dirt5      // tile_057
+    case dirt6      // tile_058
+    case dirt7      // tile_059
+    case dirt8      // tile_060
+
+    /// 凹み量（y座標を下にずらす倍率、tileH基準）
+    var depthOffset: CGFloat {
+        switch self {
+        case .log, .logCross, .logSide, .logBack: return 0.5
+        case .dirt1, .dirt2, .dirt3, .dirt4,
+             .dirt5, .dirt6, .dirt7, .dirt8:      return 0.5
+        default:                                   return 0.0
+        }
+    }
 
     var assetName: String? {
         switch self {
@@ -89,9 +141,20 @@ enum TileDecoration: Equatable {
         case .bush:         return "tile_045"
         case .tallGrass:    return "tile_043"
         case .log:          return "tile_048"
+        case .logCross:     return "tile_049"
+        case .logSide:      return "tile_051"
+        case .logBack:      return "tile_052"
         case .stump:        return "tile_051"
         case .rockSmall:    return "tile_062"
         case .rockLarge:    return "tile_053"
+        case .dirt1:        return "tile_053"
+        case .dirt2:        return "tile_054"
+        case .dirt3:        return "tile_055"
+        case .dirt4:        return "tile_056"
+        case .dirt5:        return "tile_057"
+        case .dirt6:        return "tile_058"
+        case .dirt7:        return "tile_059"
+        case .dirt8:        return "tile_060"
         }
     }
 }
@@ -122,6 +185,12 @@ private let SP = TileType.stonePath
 private let W  = TileType.water
 private let WE = TileType.waterEdge
 private let DR = TileType.dirtRough
+private let LK = TileType.lake
+private let LD = TileType.lakeDeep
+private let LS = TileType.lakeSide
+private let LE = TileType.lakeEdge
+private let LO = TileType.lakeEdgeOuter
+private let DF = TileType.dirtFlat
 
 // 偶数行: 10列（左右に見切れ用の茂みを1列追加）
 // 奇数行: 9列（同上）
@@ -137,67 +206,62 @@ let gardenLayoutMap: [[TileType]] = [
     // ===== 上端: 茂み多め（見切れ前提） =====
     [GB, GB, GB, GB, GB, GB, GB, GB, GB, GB],  // row 0
      [GB, GB, GB, GB, GB, GB, GB, GB, GB],     // row 1
-    [GB, GB, GB, GB, GB, GB, GB, GB, GB, GB],  // row 2
-     [GB, GB, GB, GB, GB, GB, GB, GB, GB],     // row 3
-    [GB, GB, GB, GB, GB, GB, GB, GB, GB, GB],  // row 4
-     [GB, GB, GB, GB, GB, GB, GB, GB, GB],     // row 5
-    [GB, GB, GB, GB, GB, GB, GB, GB, GB, GB],  // row 6
-     [GB, GB, GB, GB, GB, GB, GB, GB, GB],     // row 7
-    [GB, GB, GB, GB, GB, GB, GB, GB, GB, GB],  // row 8
+    [GB, GB, GB, GB, GB, GB, GB, GL, GL, GB],  // row 2
+     [GB, GB, GB, GB, GB, GB, GL, GL, GL],     // row 3
+    [GB, GB, GB, GB, GB, GB, GL, GL, GL, GB],  // row 4
+     [GB, GB, GB, GB, GB, GL, GL, GL, GL],     // row 5
+    [GB, GB, GB, GB, GB, GL, GL, GL, GL, GB],  // row 6
+     [GB, GB, GB, GB, GL, GL, GL, GL, GL],     // row 7
+    [GB, GB, GB, GB, GL, GL, GL, GL, GL, GB],  // row 8
     // ===== 茂み→草遷移 =====
-     [GB, GD, GD, GD, GD, GD, GD, GD, GB],     // row 9
-    [GB, GD, GM, GM, GM, GM, GM, GM, GD, GB],  // row 10
-     [GB, GM, GM, GL, GL, GL, GL, GM, GB],     // row 11
-    [GB, GM, GL, GL, GL, GL, GL, GL, GM, GB],  // row 12
-    // ===== 草原 + X字斜め道（端から端まで）=====
-    // ＼道: row13(col6,7)→row24(col1,2)  ／道: row13(col1,2)→row24(col7,8)
-    // 下半分は対称に折り返し
-     [GB, D,  D,  GL, GL, GL, D,  D,  GB],     // row 13
-    [GB, GL, D,  D,  GL, GL, D,  D,  GL, GB],  // row 14
-     [GB, GL, D,  D,  GL, D,  D,  GL, GB],     // row 15
-    [GB, GL, GL, D,  D,  D,  D,  GL, GL, GB],  // row 16
-     [GB, GL, GL, D,  D,  D,  GL, GL, GB],     // row 17
-    // ===== 中心交差 =====
-    [GB, GL, GL, GL, SP, SP, GL, GL, GL, GB],  // row 18  石畳
-     [GB, GL, GL, D,  SP, D,  GL, GL, GB],     // row 19  石畳
-    // ===== 下半分 X字 =====
-    [GB, GL, GL, D,  D,  D,  D,  GL, GL, GB],  // row 20
-     [GB, GL, D,  D,  GL, D,  D,  GL, GB],     // row 21
-    [GB, GL, D,  D,  GL, GL, D,  D,  GL, GB],  // row 22
-     [GB, D,  D,  GL, GL, GL, D,  D,  GB],     // row 23
-    [GB, D,  D,  GL, GL, GL, D,  D,  D,  GB],  // row 24
-     [GB, D,  D,  GL, GL, D,  D,  GL, GB],     // row 25
-    [GB, GL, D,  D,  GL, D,  D,  GL, GL, GB],  // row 26
-     [GB, GL, D,  D,  D,  D,  GL, GL, GB],     // row 27
-    [GB, GL, GL, D,  D,  D,  GL, GL, GL, GB],  // row 28
-     [GB, GL, GL, D,  D,  GL, GL, GL, GB],     // row 29
-    [GB, GL, GL, D,  D,  D,  GL, GL, GL, GB],  // row 30
-     [GB, GL, D,  D,  D,  D,  GL, GL, GB],     // row 31
-    [GB, GL, D,  D,  GL, D,  D,  GL, GL, GB],  // row 32
-     [GB, D,  D,  GL, GL, D,  D,  GL, GB],     // row 33
-    [GB, D,  D,  GL, GL, GL, D,  D,  GL, GB],  // row 34
-     [GB, D,  GL, GL, GL, GL, D,  D,  GB],     // row 35
+     [GB, GB, GB, GD, GD, GD, GD, GD, GL],     // row 9
+    [GB, GB, GB, GL, GL, GL, LO, GL, GD, GB],  // row 10
+     [GB, GB, GL, GL, GL, LO, LO, GL, GL],     // row 11
+    [GB, GB, GL, GL, LO, LO, LE, DF, GL, GB],  // row 12
+     [GB, GL, GL, LO, LO, LE, LS, DF, LO],     // row 13
+    [GB, GL, GL, GL, LO, LE, LS, LS, DF, LO],  // row 14
+     [GL, GL, GL, LO, LS, LS, LS, LS, DF],     // row 15
+    [GB, GL, GL, LO, LE, LS, LK, LS, DF, LO],  // row 16
+     [GL, GL, LO, LE, LS, LK, LS, LS, DF],     // row 17
+    [GB, GL, LO, LE, LS, LK, LK, LS, LS, LE],  // row 18 
+     [GL, GL, LO, LE, LS, LK, LK, LS, LE],     // row 19  
+    [GB, GL, GL, LO, LS, LK, LK, LS, LS, LE],  // row 20
+     [GL, GL, LO, LE, LK, LK, LK, LS, LE],     // row 21
+    [GB, GL, GL, LO, LS, LK, LK, LS, LE, LO],  // row 22
+     [GL, GL, LO, LE, LS, LK, LK, LS, LO],     // row 23
+    [GB, GL, GL, LO, LE, LK, LK, LS, LE, LO],  // row 24
+     [GL, GL, GL, LO, LS, LK, LS, LE, LO],     // row 25
+    [GB, GL, GL, LO, LE, LS, LS, LE, LO, GB],  // row 26
+     [GL, GL, GL, LO, LE, LS, LE, LO, P],     // row 27
+    [GB, GL, GL, GL, LO, LE, LE, LO, P, P],  // row 28
+     [GL, GL, GL, GL, LO, LE, LO, P, P],     // row 29
+    [GB, GL, GL, GL, GL, LO, LO, P, P, P],  // row 30
+     [GL, GL, GL, GL, GL, LO, P, P, P],     // row 31
+    [GB, GL, GL, GL, GL, GL, P, P, P, GB],  // row 32
+     [GL, GL, GL, GL, GL, P, P, P, GL],     // row 33
+    [GB, GL, GL, GL, GL, P, P, P, GL, GB],  // row 34
+     [GL, GL, GL, GL, P, P, P, GL, GL],     // row 35
     // ===== 草原 + 水辺（塊で配置）=====
-    [GB, GL, GL, GL, GL, GL, WE, WE, GL, GB],  // row 36  水辺（右寄り）
-     [GB, GL, GL, GL, GL, WE, W,  W,  GB],     // row 37
-    [GB, GL, GL, GL, GL, WE, W,  WE, GL, GB],  // row 38
-     [GB, GL, GL, GL, GL, GL, WE, GL, GB],     // row 39
-    [GB, GL, WE, WE, GL, GL, GL, GL, GL, GB],  // row 40  水辺（左寄り）
-     [GB, WE, W,  WE, GL, GL, GL, GL, GB],     // row 41
-    [GB, GL, WE, GL, GL, GL, GL, GL, GL, GB],  // row 42
-     [GB, GL, GL, GL, GL, GL, GL, GL, GB],     // row 43
+    [GB, GL, GL, GL, P, P, P, GL, GL, GB],  // row 36  水辺（右寄り）
+     [GL, GL, GL, P, P, P, GL, GL, GL],     // row 37
+    [GB, GL, GL, P, P, P, GL, GL, GL, GB],  // row 38
+     [GL, GL, P, P, P, GL, GL, GL, GL],     // row 39
+    [GB, GL, P, P, P, GL, GL, GL, GL, GB],  // row 40  水辺（左寄り）
+     [GL, P, P, P, GL, GL, GL, GL, GL],     // row 41
+    [GB, P, P, P, GL, GL, GL, GL, GL, GB],  // row 42
+     [P, P, P, GL, GL, GL, GL, GL, GB],     // row 43
     // ===== 草→茂み遷移 =====
-    [GB, GM, GL, GL, GL, GL, GL, GL, GM, GB],  // row 44
-     [GB, GD, GM, GL, GL, GL, GM, GD, GB],     // row 45
-    [GB, GD, GM, GM, GM, GM, GM, GM, GD, GB],  // row 46
-     [GB, GB, GD, GD, GD, GD, GD, GB, GB],     // row 47
-    [GB, GB, GB, GB, GB, GB, GB, GB, GB, GB],  // row 48
+    [P, P, P, GL, GL, GL, GL, GL, GB, GB],  // row 44
+     [P, P, GM, GL, GL, GL, GL, GB, GB],     // row 45
+    [P, P, GL, GL, GL, GL, GL, GB, GB, GB],  // row 46
+     [P, GL, GL, GL, GL, GL, GB, GB, GB],     // row 47
+    [P, GL, GL, GL, GL, GL, GB, GB, GB, GB],  // row 48
     // ===== 下端: 茂み多め（見切れ前提） =====
-     [GB, GB, GB, GB, GB, GB, GB, GB, GB],     // row 49
-    [GB, GB, GB, GB, GB, GB, GB, GB, GB, GB],  // row 50
-     [GB, GB, GB, GB, GB, GB, GB, GB, GB],     // row 51
-    [GB, GB, GB, GB, GB, GB, GB, GB, GB, GB],  // row 52
-     [GB, GB, GB, GB, GB, GB, GB, GB, GB],     // row 53
+     [GL, GL, GL, GL, GL, GB, GB, GB, GB],     // row 49
+    [GB, GL, GL, GL, GL, GB, GB, GB, GB, GB],  // row 50
+     [GL, GL, GL, GL, GB, GB, GB, GB, GB],     // row 51
+    [GB, GL, GL, GL, GB, GB, GB, GB, GB, GB],  // row 52
+     [GL, GL, GL, GB, GB, GB, GB, GB, GB],     // row 53
     [GB, GB, GB, GB, GB, GB, GB, GB, GB, GB],  // row 54
      [GB, GB, GB, GB, GB, GB, GB, GB, GB],     // row 55
 ]
@@ -214,34 +278,34 @@ let gardenDecorationMap: [[TileDecoration]] = {
     let ST = TileDecoration.stump
     return [
         // row 0-8: 茂み
-        [BU, BU, BU, BU, BU, BU, BU, BU, BU, BU],
-         [BU, BU, BU, BU, BU, BU, BU, BU, BU],
-        [BU, BU, BU, BU, BU, BU, BU, BU, BU, BU],
-         [BU, BU, BU, BU, BU, BU, BU, BU, BU],
-        [BU, BU, BU, BU, BU, BU, BU, BU, BU, BU],
-         [BU, BU, BU, BU, BU, BU, BU, BU, BU],
-        [BU, BU, BU, BU, BU, BU, BU, BU, BU, BU],
-         [BU, BU, BU, BU, BU, BU, BU, BU, BU],
-        [BU, BU, BU, BU, BU, BU, BU, BU, BU, BU],
+        [__, __, __, __, __, __, __, __, __, __],  // row 0
+         [__, __, __, __, __, __, __, __, __],     // row 1
+        [__, __, __, __, __, __, __, __, __, __],  // row 2
+         [__, __, __, __, __, __, __, __, __],     // row 3
+        [__, __, __, __, __, __, __, __, __, __],  // row 4
+         [__, __, __, __, __, __, __, __, __],     // row 5
+        [__, __, __, __, __, __, __, __, __, __],  // row 6
+         [__, __, __, __, __, __, __, __, __],     // row 7
+        [__, __, __, __, __, __, __, __, __, __],  // row 8
         // row 9-12: 遷移
-         [BU, TG, TG, __, __, __, __, TG, BU],
-        [BU, TG, __, __, __, __, __, __, TG, BU],
-         [BU, __, __, __, __, __, __, __, BU],
-        [BU, __, __, __, __, __, __, __, __, BU],
+         [__, TG, TG, __, __, __, __, TG, __],
+        [__, TG, __, __, __, __, __, __, TG, __],
+         [__, __, __, __, __, __, __, __, __],
+        [__, __, __, __, __, __, __, .dirt7, __, __],
         // row 13-23: 草原+道
-         [__, __, __, __, __, __, __, __, __],
-        [__, __, __, __, __, __, __, __, __, __],
-         [__, __, __, __, __, __, __, __, __],
-        [__, __, __, __, __, __, __, __, __, __],
-         [__, __, __, __, __, __, __, __, __],
-        [__, __, __, __, __, __, __, __, __, __],
+         [__, __, __, __, __, __, __, .dirt8, __],
+        [__, __, __, __, __, __, .logBack, __, .dirt5, __],
+         [__, __, __, __, __, .logSide, .logCross, __, .dirt4],
+        [__, __, __, __, __, __, __, __, .dirt7, __],
+         [__, __, __, __, __, __, __, __, .dirt8],
+        [__, __, __, __, __, __, __, __, __, .dirt1],
          [__, __, __, __, __, __, __, __, __],
         [__, __, __, __, __, __, __, __, __, __],
          [__, __, __, __, __, __, __, __, __],
         [__, __, __, __, __, __, __, __, __, __],
          [__, __, __, __, __, __, __, __, __],
         // row 24-27: 中心広場
-        [__, __, __, __, __, RS, __, __, __, __],
+        [__, __, __, __, __, __, __, __, __, __],
          [__, __, __, __, __, __, __, __, __],
         [__, __, __, __, __, __, __, __, __, __],
          [__, __, __, __, __, __, __, __, __],
@@ -264,19 +328,19 @@ let gardenDecorationMap: [[TileDecoration]] = {
         [__, __, __, __, __, __, __, __, __, __],
          [__, __, __, __, __, __, __, __, __],
         // row 44-48: 遷移
-        [__, __, __, __, __, __, __, __, __, __],
-         [__, TG, __, __, __, __, __, TG, __],
-        [BU, TG, __, __, __, __, __, __, TG, BU],
-         [BU, BU, TG, __, __, __, TG, BU, BU],
-        [BU, BU, BU, BU, BU, BU, BU, BU, BU, BU],
+        [__, __, __, __, __, __, __, __, __, __],  // row 44
+         [__, TG, __, __, __, __, __, TG, __],     // row 45
+        [__, __, __, __, __, __, __, __, __, __],  // row 46
+         [__, __, TG, __, __, __, TG, __, __],     // row 47
+        [__, __, __, __, __, __, __, __, __, __],  // row 48
         // row 49-55: 茂み
-         [BU, BU, BU, BU, BU, BU, BU, BU, BU],
-        [BU, BU, BU, BU, BU, BU, BU, BU, BU, BU],
-         [BU, BU, BU, BU, BU, BU, BU, BU, BU],
-        [BU, BU, BU, BU, BU, BU, BU, BU, BU, BU],
-         [BU, BU, BU, BU, BU, BU, BU, BU, BU],
-        [BU, BU, BU, BU, BU, BU, BU, BU, BU, BU],
-         [BU, BU, BU, BU, BU, BU, BU, BU, BU],
+         [__, __, __, __, __, __, __, __, __],     // row 49
+        [__, __, __, __, __, __, __, __, __, __],  // row 50
+         [__, __, __, __, __, __, __, __, __],     // row 51
+        [__, __, __, __, __, __, __, __, __, __],  // row 52
+         [__, __, __, __, __, __, __, __, __],     // row 53
+        [__, __, __, __, __, __, __, __, __, __],  // row 54
+         [__, __, __, __, __, __, __, __, __],     // row 55  全GB
     ]
 }()
 
@@ -323,7 +387,7 @@ struct GardenGridView: View {
             let offsetY = (screenH - gridHeight) / 2
 
             let plants = plantGrid
-            let dirtPositions = dirtTilePositions(tileW: tileW, tileH: tileH, rowStep: rowStep, offsetY: offsetY)
+            let dirtPositions = walkableTilePositions(tileW: tileW, tileH: tileH, rowStep: rowStep, offsetY: offsetY)
 
             ZStack(alignment: .topLeading) {
                 // 地面・デコレーション・花レイヤー
@@ -341,13 +405,14 @@ struct GardenGridView: View {
                         let key = row * cols + col
 
                         // 地面タイル
+                        let tileY = y + tileH * tileType.depthOffset
                         tileImage(name: tileType.assetName, size: tileImgSize)
-                            .position(x: x, y: y)
+                            .position(x: x, y: tileY)
 
                         // 固定デコレーション
                         if let decoAsset = deco.assetName {
                             decoImage(name: decoAsset, tileSize: tileImgSize)
-                                .position(x: x, y: y - tileH * 0.25)
+                                .position(x: x, y: y - tileH * 0.25 + tileH * deco.depthOffset)
                         }
 
                         // 植物（図鑑登録で増える花）
@@ -373,7 +438,7 @@ struct GardenGridView: View {
     }
 
     /// dirtタイルの画面座標一覧（動物の移動先候補）
-    private func dirtTilePositions(tileW: CGFloat, tileH: CGFloat, rowStep: CGFloat, offsetY: CGFloat) -> [(x: CGFloat, y: CGFloat)] {
+    private func walkableTilePositions(tileW: CGFloat, tileH: CGFloat, rowStep: CGFloat, offsetY: CGFloat) -> [(x: CGFloat, y: CGFloat)] {
         var positions: [(x: CGFloat, y: CGFloat)] = []
         let topMargin = 13
         let bottomMargin = rows - 44
@@ -382,7 +447,7 @@ struct GardenGridView: View {
             let colCount = isOdd ? cols - 1 : cols
             let xOffset: CGFloat = isOdd ? 0 : -tileW / 2
             for col in 1..<(colCount - 1) {
-                if gardenLayoutMap[row][col].canSpawnAnimal {
+                if gardenLayoutMap[row][col].canWalk {
                     let x = xOffset + CGFloat(col) * tileW + tileW / 2
                     let y = offsetY + CGFloat(row) * rowStep + tileH / 2
                     positions.append((x, y))
