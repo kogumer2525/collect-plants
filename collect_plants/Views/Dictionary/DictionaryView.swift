@@ -305,6 +305,7 @@ struct PlantDetailView: View {
                 .padding(.trailing, 32)
                 .padding(.vertical, 18)
         }
+        .frame(height: 350)
         .background(
             Image("zukan_back")
                 .resizable()
@@ -319,10 +320,10 @@ struct PlantDetailView: View {
     private var leftColumn: some View {
         VStack(spacing: 6) {
             Text(viewModel.japaneseName.isEmpty ? " " : viewModel.japaneseName.hiraganaToKatakana)
-                .font(.custom("craftmincho", size: 20))
+                .font(.custom("craftmincho", size: 16))
                 .foregroundColor(AppTheme.darkGreen)
                 .lineLimit(1)
-                .frame(height: 24)
+                .frame(height: 20)
                 .opacity(viewModel.japaneseName.isEmpty ? 0 : 1)
 
             if let uiImage = UIImage(data: currentPlant.imageData) {
@@ -343,7 +344,7 @@ struct PlantDetailView: View {
             }
 
             Text(currentPlant.plantName)
-                .font(.custom("craftmincho", size: 18))
+                .font(.custom("craftmincho", size: 15))
                 .foregroundColor(AppTheme.darkGreen)
 
             Text(currentPlant.scientificName)
