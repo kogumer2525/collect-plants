@@ -50,10 +50,10 @@ enum TileType: Equatable {
         }
     }
 
-    /// 花が生えるタイル（grassLight, grassMedium, grassDense, grassLush のみ）
+    /// 花が生えるタイル（草系 + lakeSide）
     var canPlacePlant: Bool {
         switch self {
-        case .grassLight, .grassMedium, .grassDense, .grassLush:
+        case .grassLight, .grassMedium, .grassDense, .grassLush, .lakeSide:
             return true
         default:
             return false
@@ -420,6 +420,21 @@ struct GardenGridView: View {
                             decoImage(name: flowerAsset, tileSize: tileImgSize)
                                 .position(x: x, y: y - tileH * 0.25)
                         }
+
+                        // 家具（購入済みのものを固定座標に表示、GLタイルのみ）
+                        if tileType == .grassLight,
+                           let furniture = Furniture.allItems.first(where: {
+                            ownedFurnitureIDs.contains($0.id) && $0.gardenRow == row && $0.gardenCol == col
+                        }) {
+                            let fw = tileW * furniture.widthInTiles
+                            Image(furniture.imageName)
+                                .renderingMode(.original)
+                                .resizable()
+                                .interpolation(.none)
+                                .scaledToFit()
+                                .frame(width: fw)
+                                .position(x: x, y: y - fw / 2)
+                        }
                     }
                 }
 
@@ -457,8 +472,15 @@ struct GardenGridView: View {
         return positions
     }
 
-    /// 植物配置（画面内に確実に見えるタイルのみ）
+    /// 植物配置（画面内に確実に見えるタイルのみ、家具タイルを除外）
     private var plantGrid: [Int: String] {
+        // 家具が置かれている座標を集める
+        let furnitureTiles: Set<Int> = Set(
+            Furniture.allItems
+                .filter { ownedFurnitureIDs.contains($0.id) }
+                .map { $0.gardenRow * cols + $0.gardenCol }
+        )
+
         var grassTiles: [(col: Int, row: Int)] = []
         // 上の茂み+遷移(row 0-12)と下の遷移+茂み(row 44-55)を除外
         // 左右端(col 0, 最終col)も除外 → 見切れ用の茂み列
@@ -468,7 +490,8 @@ struct GardenGridView: View {
             let isOdd = row % 2 == 1
             let colCount = isOdd ? cols - 1 : cols
             for col in 1..<(colCount - 1) where gardenLayoutMap[row][col].canPlacePlant {
-                if gardenDecorationMap[row][col] == .none {
+                let key = row * cols + col
+                if gardenDecorationMap[row][col] == .none && !furnitureTiles.contains(key) {
                     grassTiles.append((col, row))
                 }
             }
