@@ -36,7 +36,9 @@ class CoreDataService {
         longitude: Double,
         locationName: String,
         confidence: Double,
-        japaneseName: String
+        japaneseName: String,
+        description: String = "",
+        source: String = "wikipedia"
     ) -> PlantRecord {
         let record = PlantRecord(context: context)
         record.id = UUID()
@@ -50,6 +52,8 @@ class CoreDataService {
         record.confidence = confidence
         record.locationName = locationName
         record.japaneseName = japaneseName
+        record.plantDescription = description
+        record.source = source
         save()
         return record
     }

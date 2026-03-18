@@ -3,6 +3,7 @@ import Foundation
 struct WikipediaPlantInfo: Sendable {
     let japaneseName: String
     let description: String
+    let source: String  // "wikipedia" または "mistral"
 }
 
 struct OpenSearchResponse: Codable, Sendable {
@@ -86,7 +87,8 @@ class WikipediaService {
 
         return WikipediaPlantInfo(
             japaneseName: japaneseName,
-            description: description
+            description: description,
+            source: "wikipedia"
         )
     }
 

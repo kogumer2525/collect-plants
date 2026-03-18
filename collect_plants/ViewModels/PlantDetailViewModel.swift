@@ -8,23 +8,19 @@ class PlantDetailViewModel {
     var plantDescription: String = ""
     var isLoading = false
 
-    private let wikipediaService = WikipediaService.shared
-
     init(plant: PlantRecord) {
         self.plant = plant
     }
 
-    func fetchWikipediaInfo() async {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            let info = try await wikipediaService.fetchPlantInfo(scientificName: plant.scientificName)
-            japaneseName = info.japaneseName
-            plantDescription = info.description
-        } catch {
-            japaneseName = "不明"
-            plantDescription = "情報を取得できませんでした"
+    func loadPlantInfo() {
+        // CoreDataから直接読み込み（キャッシュされているため）
+        japaneseName = plant.japaneseName
+        plantDescription = plant.plantDescription
+        
+        // 古いデータで description が空の場合、フォールバック
+        if plantDescription.isEmpty && japaneseName != "日本語名不明" && !japaneseName.isEmpty {
+            japaneseName = plant.japaneseName.isEmpty ? "不明" : plant.japaneseName
+            plantDescription = "情報が登録されていません"
         }
     }
 }

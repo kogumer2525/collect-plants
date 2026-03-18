@@ -63,7 +63,26 @@ class ExploreViewModel {
             async let wikiInfoTask = WikipediaService.shared.fetchPlantInfo(scientificName: candidate.scientificName)
             
             let locationName = try await locationNameTask
-            let wikiInfo = try await wikiInfoTask
+            var wikiInfo = try await wikiInfoTask
+
+            // Wikipedia APIで「日本語名不明」となった場合、Mistralにフォールバック
+            if wikiInfo.japaneseName == "日本語名不明" {
+                print("[ExploreVM] Wikipedia で日本語名不明 → Mistral にフォールバック")
+                do {
+                    let mistralInfo = try await MistralService.shared.fetchPlantInfo(scientificName: candidate.scientificName)
+                    print("[ExploreVM] Mistral 成功: \(mistralInfo.japaneseName)")
+                    wikiInfo = WikipediaPlantInfo(
+                        japaneseName: mistralInfo.japaneseName,
+                        description: mistralInfo.description,
+                        source: "mistral"
+                    )
+                } catch {
+                    // Mistralも失敗した場合は、Wikipediaの結果（「日本語名不明」）をそのまま使用
+                    print("[ExploreVM] Mistral フォールバック失敗: \(error.localizedDescription)")
+                }
+            } else {
+                print("[ExploreVM] Wikipedia 成功: \(wikiInfo.japaneseName)")
+            }
 
             _ = coreDataService.savePlantRecord(
                 plantName: candidate.plantName,
@@ -73,7 +92,9 @@ class ExploreViewModel {
                 longitude: location.coordinate.longitude,
                 locationName: locationName,
                 confidence: candidate.score,
-                japaneseName: wikiInfo.japaneseName
+                japaneseName: wikiInfo.japaneseName,
+                description: wikiInfo.description,
+                source: wikiInfo.source
             )
 
             resetState()
