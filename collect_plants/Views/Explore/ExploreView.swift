@@ -13,6 +13,13 @@ struct ExploreView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("探す")
+                        .font(.headline)
+                        .foregroundColor(AppTheme.darkGreen)
+                }
+            }
             .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
