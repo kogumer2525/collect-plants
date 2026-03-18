@@ -20,4 +20,11 @@
         <attribute name="name" attributeType="String" defaultValueString=""/>
         <attribute name="rarity" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
     </entity>
+    <entity name="FurnitureRecord" representedClassName="FurnitureRecord" syncable="YES">
+        <attribute name="emoji" attributeType="String" defaultValueString=""/>
+        <attribute name="furnitureID" attributeType="String" defaultValueString=""/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String" defaultValueString=""/>
+        <attribute name="purchasedDate" attributeType="Date" usesScalarValueType="NO"/>
+    </entity>
 </model>

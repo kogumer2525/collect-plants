@@ -29,7 +29,7 @@ class DictionaryViewModel {
 
     var uniquePlants: [PlantRecord] {
         var seen = Set<String>()
-        var filtered = plants.filter { plant in
+        let filtered = plants.filter { plant in
             let key = plant.plantName
             if seen.contains(key) { return false }
             seen.insert(key)

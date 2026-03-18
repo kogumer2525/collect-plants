@@ -82,7 +82,7 @@ class MapViewModel {
     }
 
     private func claimTodayPoints() {
-        let pointsClaimed = pointManager.claimPointsForSteps(todaySteps)
+        _ = pointManager.claimPointsForSteps(todaySteps)
         todayPoints = pointManager.getDailyClaimedPoints()
         totalPoints = pointManager.getTotalPoints()
     }
