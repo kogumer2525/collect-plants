@@ -11,15 +11,15 @@ struct GardenLevelView: View {
             // レベルバッジ
             ZStack {
                 Circle()
-                    .fill(AppTheme.darkGreen)
+                    .fill(Color.white)
                     .frame(width: 44, height: 44)
                 VStack(spacing: 0) {
                     Text("Lv")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(AppTheme.darkGreen.opacity(0.7))
                     Text("\(level)")
                         .font(.system(size: 18, weight: .black))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppTheme.darkGreen)
                 }
             }
 
@@ -27,24 +27,24 @@ struct GardenLevelView: View {
                 HStack {
                     Text("庭レベル \(level)")
                         .font(.caption.bold())
-                        .foregroundColor(AppTheme.darkGreen)
+                        .foregroundColor(.white)
                     Spacer()
                     Text("\(points) / \(nextLevelPoints) pt")
                         .font(.caption2)
-                        .foregroundColor(AppTheme.darkGreen.opacity(0.7))
+                        .foregroundColor(.white.opacity(0.85))
                 }
 
                 // 経験値バー
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(AppTheme.primaryGreen.opacity(0.3))
+                            .fill(Color.white.opacity(0.35))
                             .frame(height: 8)
 
                         RoundedRectangle(cornerRadius: 4)
                             .fill(
                                 LinearGradient(
-                                    colors: [AppTheme.accentGreen, AppTheme.darkGreen],
+                                    colors: [Color.white, Color.white.opacity(0.75)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -63,8 +63,8 @@ struct GardenLevelView: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
+                .fill(Color.black.opacity(0.25))
+                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 2)
         )
         .padding(.horizontal, 16)
     }

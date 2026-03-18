@@ -28,6 +28,17 @@ struct ItemShopView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text("庭に戻る")
+                        }
+                        .foregroundColor(AppTheme.darkGreen)
+                    }
+                }
                 ToolbarItem(placement: .principal) {
                     Text("アイテムショップ")
                         .font(.headline)
@@ -105,9 +116,9 @@ struct ItemShopView: View {
                 Image(furniture.imageName)
                     .resizable()
                     .scaledToFit()
-                    .frame(height: 100)
+                    .frame(height: 200)
             }
-            .frame(height: 120)
+            .frame(height: 220)
 
             // Name
             Text(furniture.name)
@@ -138,22 +149,34 @@ struct ItemShopView: View {
                 }
                 Spacer()
 
-                Button(action: {
-                    if viewModel.purchaseFurniture(furniture) {
-                        purchaseSuccess = true
-                    }
-                }) {
-                    Text("購入")
+                if viewModel.isSoldOut(furniture) {
+                    Text("売り切れ")
                         .font(.caption.bold())
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
-                                .fill(viewModel.canAfford(furniture) ? AppTheme.accentGreen : Color.gray)
+                                .fill(Color.gray)
                         )
+                } else {
+                    Button(action: {
+                        if viewModel.purchaseFurniture(furniture) {
+                            purchaseSuccess = true
+                        }
+                    }) {
+                        Text("購入")
+                            .font(.caption.bold())
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(viewModel.canAfford(furniture) ? AppTheme.accentGreen : Color.gray)
+                            )
+                    }
+                    .disabled(!viewModel.canAfford(furniture))
                 }
-                .disabled(!viewModel.canAfford(furniture))
             }
         }
         .padding()

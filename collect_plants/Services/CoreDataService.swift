@@ -73,6 +73,7 @@ class CoreDataService {
 
     // MARK: - Furniture
 
+    @discardableResult
     func purchaseFurniture(furnitureID: String, name: String, emoji: String) -> FurnitureRecord {
         let record = FurnitureRecord(context: context)
         record.id = UUID()

@@ -1,7 +1,12 @@
 import SwiftUI
 
+extension Notification.Name {
+    static let furniturePurchased = Notification.Name("furniturePurchased")
+}
+
 struct GardenView: View {
     @State private var viewModel = GardenViewModel()
+    @State private var showShop = false
 
     var body: some View {
         ZStack {
@@ -40,6 +45,21 @@ struct GardenView: View {
                             .padding(.horizontal, 10)
                             .padding(.vertical, 4)
                             .background(Capsule().fill(.ultraThinMaterial))
+                            .overlay(Capsule().stroke(Color.white.opacity(0.7), lineWidth: 1.5))
+                        Button {
+                            showShop = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "bag.fill")
+                                Text("ショップ")
+                                    .font(.caption.bold())
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(.ultraThinMaterial))
+                            .overlay(Capsule().stroke(Color.white.opacity(0.7), lineWidth: 1.5))
+                        }
                     }
                     .padding(.horizontal, 16)
 
@@ -108,6 +128,14 @@ struct GardenView: View {
         }
         .onAppear {
             viewModel.loadGarden()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .furniturePurchased)) { _ in
+            viewModel.loadGarden()
+        }
+        .sheet(isPresented: $showShop) {
+            ItemShopView()
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
     }
 
