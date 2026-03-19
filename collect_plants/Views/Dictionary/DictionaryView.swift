@@ -1,7 +1,7 @@
-import SwiftUI
-import MapKit
-import CoreLocation
 import CoreData
+import CoreLocation
+import MapKit
+import SwiftUI
 
 struct DictionaryView: View {
     @State private var viewModel = DictionaryViewModel()
@@ -12,7 +12,7 @@ struct DictionaryView: View {
             Group {
                 if viewModel.uniquePlants.isEmpty {
                     ZStack {
-                        AppTheme.background.ignoresSafeArea()
+                        AppTheme.background.ignoresSafeArea(edges: .bottom)
                         VStack(spacing: 16) {
                             Image(systemName: "leaf.fill")
                                 .font(.system(size: 64))
@@ -29,7 +29,11 @@ struct DictionaryView: View {
                     }
                 } else {
                     List(viewModel.uniquePlants) { plant in
-                        NavigationLink(destination: PlantDetailView(plant: plant, allPlants: viewModel.uniquePlants, navigationPath: $navigationPath)) {
+                        NavigationLink(
+                            destination: PlantDetailView(
+                                plant: plant, allPlants: viewModel.uniquePlants,
+                                navigationPath: $navigationPath)
+                        ) {
                             PlantRowView(plant: plant)
                         }
                         .listRowBackground(AppTheme.cardBackground)
@@ -159,7 +163,9 @@ struct PlantDetailView: View {
     @Environment(\.managedObjectContext) var managedObjectContext
     @Environment(\.dismiss) var dismiss
 
-    init(plant: PlantRecord, allPlants: [PlantRecord], navigationPath: Binding<NavigationPath>? = nil) {
+    init(
+        plant: PlantRecord, allPlants: [PlantRecord], navigationPath: Binding<NavigationPath>? = nil
+    ) {
         self.allPlants = allPlants
         self.externalNavigationPath = navigationPath
         _currentPlant = State(initialValue: plant)
@@ -210,7 +216,8 @@ struct PlantDetailView: View {
                             .padding(.horizontal, 8)
                             .padding(.top, 8)
                             .padding(.bottom, 12)
-                        } else if currentPlant.source == "wikipedia" || currentPlant.source.isEmpty {
+                        } else if currentPlant.source == "wikipedia" || currentPlant.source.isEmpty
+                        {
                             // Wikipedia による説明
                             VStack(spacing: 2) {
                                 Text("📖 この説明文の一部はWikipediaの記事を元にしています。")
@@ -219,9 +226,11 @@ struct PlantDetailView: View {
                                 Text("Source: Wikipedia (https://www.wikipedia.org/)")
                                     .font(.system(size: 7))
                                     .foregroundColor(.secondary)
-                                Text("Text is available under the Creative Commons Attribution-ShareAlike License (CC BY-SA).")
-                                    .font(.system(size: 7))
-                                    .foregroundColor(.secondary)
+                                Text(
+                                    "Text is available under the Creative Commons Attribution-ShareAlike License (CC BY-SA)."
+                                )
+                                .font(.system(size: 7))
+                                .foregroundColor(.secondary)
                             }
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 8)
@@ -245,7 +254,10 @@ struct PlantDetailView: View {
                                     .foregroundColor(canMovePrevious ? .white : .secondary)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
-                                    .background(canMovePrevious ? AppTheme.primaryGreen : AppTheme.cardBackground)
+                                    .background(
+                                        canMovePrevious
+                                            ? AppTheme.primaryGreen : AppTheme.cardBackground
+                                    )
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                             .disabled(!canMovePrevious)
@@ -258,7 +270,10 @@ struct PlantDetailView: View {
                                     .foregroundColor(canMoveNext ? .white : .secondary)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
-                                    .background(canMoveNext ? AppTheme.primaryGreen : AppTheme.cardBackground)
+                                    .background(
+                                        canMoveNext
+                                            ? AppTheme.primaryGreen : AppTheme.cardBackground
+                                    )
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                             .disabled(!canMoveNext)
@@ -303,7 +318,9 @@ struct PlantDetailView: View {
             // sheet が閉じた時（showEditModal が false になった時）、currentPlant をコア データから再度読み込み
             if !newValue && !currentPlant.isDeleted {
                 managedObjectContext.refresh(currentPlant, mergeChanges: true)
-                print("[PlantDetail] 編集完了 - UI を更新しました: \(currentPlant.locationName), \(currentPlant.date)")
+                print(
+                    "[PlantDetail] 編集完了 - UI を更新しました: \(currentPlant.locationName), \(currentPlant.date)"
+                )
             }
         }
         .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
@@ -312,10 +329,11 @@ struct PlantDetailView: View {
             viewModel.loadPlantInfo()
         }
         .fullScreenCover(isPresented: $showFullScreenImage) {
-            FullScreenImageView(imageData: currentPlant.imageData, isPresented: $showFullScreenImage)
+            FullScreenImageView(
+                imageData: currentPlant.imageData, isPresented: $showFullScreenImage)
         }
         .alert("削除確認", isPresented: $showDeleteConfirmation) {
-            Button("キャンセル", role: .cancel) { }
+            Button("キャンセル", role: .cancel) {}
             Button("削除", role: .destructive) {
                 deletePlantRecord()
             }
@@ -323,21 +341,21 @@ struct PlantDetailView: View {
             Text("\(currentPlant.plantName)を削除しますか？")
         }
     }
-    
+
     private func deletePlantRecord() {
         let plantName = currentPlant.plantName
         isDeleted = true
         showEditModal = false
         showFullScreenImage = false
-        
+
         do {
             // CoreData から削除
             managedObjectContext.delete(currentPlant)
             try managedObjectContext.save()
-            
+
             print("[PlantDetail] 削除完了: \(plantName)")
             NotificationCenter.default.post(name: .plantRecordsDidChange, object: nil)
-            
+
             // 削除後、確実に一覧に戻る
             if let navPath = externalNavigationPath {
                 // NavigationStack経由の場合
@@ -462,8 +480,9 @@ struct PlantDetailView: View {
     }
 
     private var locationInfoRow: some View {
-        zukanInfoRow(icon: "mappin.circle.fill", label: "発見場所",
-                     value: currentPlant.locationName.isEmpty ? "不明" : currentPlant.locationName)
+        zukanInfoRow(
+            icon: "mappin.circle.fill", label: "発見場所",
+            value: currentPlant.locationName.isEmpty ? "不明" : currentPlant.locationName)
     }
 
     private var dateInfoRow: some View {
@@ -511,22 +530,28 @@ struct PlantDetailView: View {
 
     private var locationMapView: some View {
         ZStack {
-            Map(position: .constant(.region(
-                MKCoordinateRegion(
-                    center: CLLocationCoordinate2D(
+            Map(
+                position: .constant(
+                    .region(
+                        MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(
+                                latitude: currentPlant.latitude,
+                                longitude: currentPlant.longitude
+                            ),
+                            span: MKCoordinateSpan(
+                                latitudeDelta: 0.05,
+                                longitudeDelta: 0.05
+                            )
+                        )
+                    ))
+            ) {
+                Annotation(
+                    "",
+                    coordinate: CLLocationCoordinate2D(
                         latitude: currentPlant.latitude,
                         longitude: currentPlant.longitude
-                    ),
-                    span: MKCoordinateSpan(
-                        latitudeDelta: 0.05,
-                        longitudeDelta: 0.05
                     )
-                )
-            ))) {
-                Annotation("", coordinate: CLLocationCoordinate2D(
-                    latitude: currentPlant.latitude,
-                    longitude: currentPlant.longitude
-                )) {
+                ) {
                     Image(systemName: "mappin.circle.fill")
                         .foregroundColor(AppTheme.primaryGreen)
                         .font(.system(size: 28))
@@ -549,13 +574,13 @@ struct FullScreenImageView: View {
     var body: some View {
         ZStack {
             Color.black
-                .ignoresSafeArea()
+                .ignoresSafeArea(edges: .bottom)
 
             if let uiImage = UIImage(data: imageData) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFit()
-                    .ignoresSafeArea()
+                    .ignoresSafeArea(edges: .bottom)
             }
 
             VStack {

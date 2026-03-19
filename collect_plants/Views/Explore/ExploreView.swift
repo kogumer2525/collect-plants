@@ -1,5 +1,5 @@
-import SwiftUI
 import PhotosUI
+import SwiftUI
 
 struct ExploreView: View {
     @State private var viewModel = ExploreViewModel()
@@ -14,7 +14,7 @@ struct ExploreView: View {
                         ProgressView()
                             .scaleEffect(1.5)
                             .tint(AppTheme.darkGreen)
-                        
+
                         VStack(spacing: 8) {
                             Text("植物を識別中...")
                                 .font(.headline)
@@ -58,14 +58,16 @@ struct ExploreView: View {
 
     private var cameraView: some View {
         ZStack {
-            CameraPreviewView(session: viewModel.cameraService.session, cameraService: viewModel.cameraService)
-                .ignoresSafeArea()
-                .onAppear {
-                    viewModel.cameraService.startSession()
-                }
-                .onDisappear {
-                    viewModel.cameraService.stopSession()
-                }
+            CameraPreviewView(
+                session: viewModel.cameraService.session, cameraService: viewModel.cameraService
+            )
+            .ignoresSafeArea(edges: .bottom)
+            .onAppear {
+                viewModel.cameraService.startSession()
+            }
+            .onDisappear {
+                viewModel.cameraService.stopSession()
+            }
 
             VStack {
                 HStack {
@@ -112,7 +114,7 @@ struct ExploreView: View {
 
                 VStack {
                     Spacer()
-                    
+
                     ZStack {
                         // 撮影ボタン（中央）
                         Button(action: {
@@ -122,7 +124,9 @@ struct ExploreView: View {
                                 Circle()
                                     .fill(AppTheme.primaryGradient)
                                     .frame(width: 80, height: 80)
-                                    .shadow(color: AppTheme.accentGreen.opacity(0.5), radius: 8, x: 0, y: 4)
+                                    .shadow(
+                                        color: AppTheme.accentGreen.opacity(0.5), radius: 8, x: 0,
+                                        y: 4)
                                 Circle()
                                     .stroke(Color.white, lineWidth: 3)
                                     .frame(width: 70, height: 70)
@@ -133,7 +137,7 @@ struct ExploreView: View {
                         }
                         .disabled(viewModel.isIdentifying)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        
+
                         // ギャラリーボタン（右隅）
                         HStack {
                             Spacer()
@@ -234,12 +238,17 @@ struct ExploreView: View {
                                 .padding()
                                 .background(
                                     RoundedRectangle(cornerRadius: AppTheme.smallCornerRadius)
-                                        .fill(candidate.id == viewModel.selectedCandidate?.id
-                                              ? AppTheme.primaryGreen.opacity(0.3)
-                                              : AppTheme.background)
+                                        .fill(
+                                            candidate.id == viewModel.selectedCandidate?.id
+                                                ? AppTheme.primaryGreen.opacity(0.3)
+                                                : AppTheme.background
+                                        )
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: AppTheme.smallCornerRadius)
-                                                .stroke(AppTheme.primaryGreen.opacity(0.5), lineWidth: 1)
+                                            RoundedRectangle(
+                                                cornerRadius: AppTheme.smallCornerRadius
+                                            )
+                                            .stroke(
+                                                AppTheme.primaryGreen.opacity(0.5), lineWidth: 1)
                                         )
                                 )
                             }
@@ -256,12 +265,14 @@ struct ExploreView: View {
                             .scaledToFit()
                             .frame(height: 40)
                     }
-                    
-                    Text("The image-based plant species identification service used, is based on the Pl@ntNet recognition API, regularly updated and accessible through the site https://my.plantnet.org/")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .lineLimit(nil)
-                        .multilineTextAlignment(.center)
+
+                    Text(
+                        "The image-based plant species identification service used, is based on the Pl@ntNet recognition API, regularly updated and accessible through the site https://my.plantnet.org/"
+                    )
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(nil)
+                    .multilineTextAlignment(.center)
                 }
                 .padding()
                 .frame(maxWidth: .infinity)

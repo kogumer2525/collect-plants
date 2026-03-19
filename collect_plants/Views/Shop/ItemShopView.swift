@@ -11,7 +11,7 @@ struct ItemShopView: View {
         NavigationStack {
             ZStack {
                 AppTheme.background
-                    .ignoresSafeArea()
+                    .ignoresSafeArea(edges: .bottom)
 
                 ScrollView {
                     VStack(spacing: 16) {
@@ -51,7 +51,7 @@ struct ItemShopView: View {
                 viewModel.load()
             }
             .alert("購入しました！", isPresented: $purchaseSuccess) {
-                Button("OK") { }
+                Button("OK") {}
             }
         }
     }
@@ -172,7 +172,9 @@ struct ItemShopView: View {
                             .padding(.vertical, 6)
                             .background(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .fill(viewModel.canAfford(furniture) ? AppTheme.accentGreen : Color.gray)
+                                    .fill(
+                                        viewModel.canAfford(furniture)
+                                            ? AppTheme.accentGreen : Color.gray)
                             )
                     }
                     .disabled(!viewModel.canAfford(furniture))

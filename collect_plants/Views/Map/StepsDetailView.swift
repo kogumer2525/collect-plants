@@ -7,7 +7,7 @@ struct StepsDetailView: View {
         NavigationStack {
             ZStack {
                 AppTheme.background
-                    .ignoresSafeArea()
+                    .ignoresSafeArea(edges: .bottom)
 
                 ScrollView {
                     VStack(spacing: 16) {
