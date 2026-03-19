@@ -63,7 +63,7 @@ struct StepsDetailView: View {
             }
             HStack(alignment: .bottom, spacing: 2) {
                 Text("\(viewModel.formatSteps(viewModel.todaySteps))")
-                    .font(.system(size: 48, weight: .bold))
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundColor(AppTheme.darkGreen)
                 Text("歩")
                     .font(.headline)
@@ -93,7 +93,7 @@ struct StepsDetailView: View {
             }
             HStack(alignment: .bottom, spacing: 2) {
                 Text("\(viewModel.todayPoints)")
-                    .font(.system(size: 48, weight: .bold))
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundColor(Color(red: 1.0, green: 0.84, blue: 0.0))
                 Text("P")
                     .font(.headline)
