@@ -1,5 +1,5 @@
-import SwiftUI
 import MapKit
+import SwiftUI
 
 struct PlantMapView: View {
     @State private var viewModel = MapViewModel()
@@ -10,37 +10,49 @@ struct PlantMapView: View {
                 // Full Screen Map
                 Map(initialPosition: .region(viewModel.region)) {
                     ForEach(viewModel.plants) { plant in
-                        Annotation(plant.japaneseName.isEmpty ? plant.plantName : plant.japaneseName, coordinate: CLLocationCoordinate2D(
-                            latitude: plant.latitude,
-                            longitude: plant.longitude
-                        )) {
-                            NavigationLink(destination: PlantDetailView(plant: plant, allPlants: viewModel.plants)) {
+                        Annotation(
+                            plant.japaneseName.isEmpty ? plant.plantName : plant.japaneseName,
+                            coordinate: CLLocationCoordinate2D(
+                                latitude: plant.latitude,
+                                longitude: plant.longitude
+                            )
+                        ) {
+                            NavigationLink(
+                                destination: PlantDetailView(
+                                    plant: plant, allPlants: viewModel.plants)
+                            ) {
                                 VStack(spacing: 2) {
                                     ZStack {
                                         Circle()
                                             .fill(AppTheme.primaryGradient)
                                             .frame(width: 36, height: 36)
-                                            .shadow(color: AppTheme.accentGreen.opacity(0.4), radius: 4, x: 0, y: 2)
+                                            .shadow(
+                                                color: AppTheme.accentGreen.opacity(0.4), radius: 4,
+                                                x: 0, y: 2)
                                         Image(systemName: "leaf.fill")
                                             .font(.system(size: 16))
                                             .foregroundColor(.white)
                                     }
-                                    Text(plant.japaneseName.isEmpty ? plant.plantName : plant.japaneseName)
-                                        .font(.caption2.bold())
-                                        .foregroundColor(AppTheme.darkGreen)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .fill(AppTheme.cardBackground.opacity(0.95))
-                                                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-                                        )
+                                    Text(
+                                        plant.japaneseName.isEmpty
+                                            ? plant.plantName : plant.japaneseName
+                                    )
+                                    .font(.caption2.bold())
+                                    .foregroundColor(AppTheme.darkGreen)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .fill(AppTheme.cardBackground.opacity(0.95))
+                                            .shadow(
+                                                color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                                    )
                                 }
                             }
                         }
                     }
                 }
-                .ignoresSafeArea()
+                .ignoresSafeArea(edges: .bottom)
 
                 // Floating Action Button (Bottom Right)
                 VStack {
@@ -84,4 +96,3 @@ struct PlantMapView: View {
         }
     }
 }
-

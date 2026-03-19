@@ -15,7 +15,7 @@ struct GardenView: View {
                 colors: [
                     Color(red: 0.42, green: 0.65, blue: 0.35),
                     Color(red: 0.55, green: 0.78, blue: 0.42),
-                    Color(red: 0.48, green: 0.72, blue: 0.38)
+                    Color(red: 0.48, green: 0.72, blue: 0.38),
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -76,7 +76,7 @@ struct GardenView: View {
                     LinearGradient(
                         colors: [
                             Color.black.opacity(0.25),
-                            Color.black.opacity(0.0)
+                            Color.black.opacity(0.0),
                         ],
                         startPoint: .top,
                         endPoint: .bottom
