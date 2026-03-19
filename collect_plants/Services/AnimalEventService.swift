@@ -4,84 +4,126 @@ import Combine
 // MARK: - 動物の種類
 enum CritterType: String, CaseIterable {
     case boar
-    case badger
     case stag
+    case wolf
 
-    /// スプライトストリップのアセット名プレフィックス
-    var assetPrefix: String {
-        switch self {
-        case .boar:   return "boar"
-        case .badger: return "critter_badger"
-        case .stag:   return "critter_stag"
+    /// ローテーション順序: Lv.2→boar, Lv.3→stag, Lv.4→wolf, Lv.5→boar...
+    static let rotationOrder: [CritterType] = [.boar, .stag, .wolf]
+
+    /// レベルから追加される動物リストを返す
+    static func crittersForLevel(_ level: Int) -> [CritterType] {
+        let count = max(0, level - 1)
+        return (0..<count).map { i in
+            rotationOrder[i % rotationOrder.count]
         }
     }
+}
 
-    /// idle アニメーションのサフィックス
-    var idleSuffix: String {
-        switch self {
-        case .boar:   return "idle_strip"
-        case .badger: return "idle"
-        case .stag:   return "idle"
-        }
-    }
-
-    /// walk アニメーションのサフィックス
-    var walkSuffix: String {
-        switch self {
-        case .boar:   return "run_strip"
-        case .badger: return "walk"
-        case .stag:   return "walk"
-        }
-    }
-
-    /// 各方向の idle スプライトストリップのフレーム数
-    var idleFrameCount: Int {
-        switch self {
-        case .boar:   return 7
-        case .badger: return 28
-        case .stag:   return 18
-        }
-    }
-
-    /// 各方向の walk スプライトストリップのフレーム数
-    var walkFrameCount: Int {
-        switch self {
-        case .boar:   return 4
-        case .badger: return 9
-        case .stag:   return 8
-        }
-    }
-
-    /// フレームの高さ（ピクセル）
-    var frameHeight: CGFloat {
-        switch self {
-        case .boar:   return 30
-        case .badger: return 32
-        case .stag:   return 41
-        }
-    }
-
-    /// アセット名を生成（方向 + アニメーション種類）
-    func assetName(direction: CritterDirection, animation: CritterAnimation) -> String {
-        let dirStr = direction.rawValue
-        let suffix = animation == .idle ? idleSuffix : walkSuffix
-        return "\(assetPrefix)_\(dirStr)_\(suffix)"
-    }
-
-    func frameCount(for animation: CritterAnimation) -> Int {
-        animation == .idle ? idleFrameCount : walkFrameCount
-    }
+// MARK: - スプライト形式
+enum SpriteFormat {
+    /// 横1列のストリップ画像（boar, stag）
+    case strip
+    /// グリッド形式のスプライトシート（wolf）
+    case sheet(columns: Int, rows: Int)
 }
 
 // MARK: - 方向
 enum CritterDirection: String, CaseIterable {
     case NE, NW, SE, SW
+
+    /// wolf スプライトシートでの行インデックス
+    var wolfRow: Int {
+        switch self {
+        case .NW: return 0
+        case .NE: return 1
+        case .SW: return 2
+        case .SE: return 3
+        }
+    }
 }
 
 // MARK: - アニメーション
 enum CritterAnimation {
     case idle
     case walk
+}
+
+// MARK: - スプライト情報
+extension CritterType {
+    var assetPrefix: String {
+        switch self {
+        case .boar: return "boar"
+        case .stag: return "critter_stag"
+        case .wolf: return "wolf"
+        }
+    }
+
+    var spriteFormat: SpriteFormat {
+        switch self {
+        case .boar, .stag: return .strip
+        case .wolf:        return .sheet(columns: 4, rows: 4) // idle: 4x4, run: 8x4
+        }
+    }
+
+    /// ストリップ形式のアセット名（boar, stag 用）
+    func stripAssetName(direction: CritterDirection, animation: CritterAnimation) -> String {
+        let dirStr = direction.rawValue
+        let suffix: String
+        switch (self, animation) {
+        case (.boar, .idle):  suffix = "idle_strip"
+        case (.boar, .walk):  suffix = "run_strip"
+        case (.stag, .idle):  suffix = "idle"
+        case (.stag, .walk):  suffix = "walk"
+        default:              suffix = "idle"
+        }
+        return "\(assetPrefix)_\(dirStr)_\(suffix)"
+    }
+
+    /// スプライトシート形式のアセット名（wolf 用）
+    func sheetAssetName(animation: CritterAnimation) -> String {
+        switch animation {
+        case .idle: return "wolf_idle"
+        case .walk: return "wolf_run"
+        }
+    }
+
+    /// フレーム数
+    func frameCount(for animation: CritterAnimation) -> Int {
+        switch self {
+        case .boar:
+            return animation == .idle ? 7 : 4
+        case .stag:
+            return animation == .idle ? 24 : 11
+        case .wolf:
+            return animation == .idle ? 4 : 8
+        }
+    }
+
+    /// シート形式の列数（wolf 用）
+    func sheetColumns(for animation: CritterAnimation) -> Int {
+        switch animation {
+        case .idle: return 4
+        case .walk: return 8
+        }
+    }
+
+    /// フレームの高さ（ストリップ形式用）
+    var frameHeight: CGFloat {
+        switch self {
+        case .boar:  return 30
+        case .stag:  return 41
+        case .wolf:  return 64
+        }
+    }
+
+    /// 表示倍率（動物間のサイズバランス調整）
+    var displayScale: CGFloat {
+        switch self {
+        case .boar:  return 1.0
+        case .stag:  return 1.0
+        case .wolf:  return 1.8
+        }
+    }
 }
 
 // MARK: - 庭にいる動物データ
@@ -93,29 +135,16 @@ struct GardenCritter: Identifiable {
 class AnimalEventService: ObservableObject {
     static let shared = AnimalEventService()
 
-    @Published var visitingAnimal: String?
     @Published var gardenCritters: [GardenCritter] = []
 
     private init() {}
 
     /// 庭レベルに応じて動物を配置する
-    /// レベル1上がるごとに動物が1体増える
-    func checkForAnimalVisit(plantSpeciesCount: Int, level: Int) {
-        let animalCount = max(0, level - 1)
-
-        var rng = SeededRandomNumberGenerator(seed: UInt64(Date().timeIntervalSince1970))
-        let allTypes = CritterType.allCases
-
-        var critters: [GardenCritter] = []
-        for i in 0..<animalCount {
-            let typeIndex = Int(rng.next() % UInt64(allTypes.count))
-            critters.append(GardenCritter(id: i, type: allTypes[typeIndex]))
-        }
-
-        gardenCritters = critters
-
-        if !critters.isEmpty {
-            visitingAnimal = nil
+    /// Lv.2→boar, Lv.3→stag, Lv.4→wolf, Lv.5→boar... のローテーション
+    func updateCritters(level: Int) {
+        let types = CritterType.crittersForLevel(level)
+        gardenCritters = types.enumerated().map { index, type in
+            GardenCritter(id: index, type: type)
         }
     }
 }

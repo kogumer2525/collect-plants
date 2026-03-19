@@ -100,30 +100,6 @@ struct GardenView: View {
                     Spacer()
                 }
 
-                // 動物来訪バナー
-                if let animal = viewModel.visitingAnimal {
-                    HStack(spacing: 12) {
-                        Text(animal)
-                            .font(.system(size: 36))
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("来訪者")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("やってきました！")
-                                .font(.headline)
-                                .foregroundColor(AppTheme.darkGreen)
-                        }
-                        Spacer()
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                            .fill(AppTheme.paleYellow)
-                            .shadow(color: Color.yellow.opacity(0.2), radius: 6, x: 0, y: 2)
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
-                }
             }
         }
         .onAppear {
