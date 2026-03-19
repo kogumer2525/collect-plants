@@ -11,7 +11,7 @@ struct PlantMapView: View {
                 Map(initialPosition: .region(viewModel.region)) {
                     ForEach(viewModel.plants) { plant in
                         Annotation(
-                            plant.japaneseName.isEmpty ? plant.plantName : plant.japaneseName,
+                            "",
                             coordinate: CLLocationCoordinate2D(
                                 latitude: plant.latitude,
                                 longitude: plant.longitude
