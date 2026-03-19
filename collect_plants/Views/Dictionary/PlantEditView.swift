@@ -116,10 +116,15 @@ struct PlantEditView: View {
                                 .fontWeight(.semibold)
                         }
                     }
-                    .disabled(isUpdating || (selectedDate == plant.date && locationNameInput == plant.locationName))
+                    .disabled(plant.isDeleted || isUpdating || (selectedDate == plant.date && locationNameInput == plant.locationName))
                 }
             }
             .background(AppTheme.background)
+        }
+        .onAppear {
+            if plant.isDeleted {
+                dismiss()
+            }
         }
     }
     

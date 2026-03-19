@@ -76,6 +76,12 @@ class CoreDataService {
         return uniqueNames.count
     }
 
+    func deletePlantRecord(_ record: PlantRecord) {
+        context.delete(record)
+        save()
+        print("[CoreDataService] 植物レコードを削除しました: \(record.plantName)")
+    }
+
     // MARK: - Furniture
 
     @discardableResult
