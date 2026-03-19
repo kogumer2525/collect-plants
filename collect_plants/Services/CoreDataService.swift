@@ -38,7 +38,8 @@ class CoreDataService {
         confidence: Double,
         japaneseName: String,
         description: String = "",
-        source: String = "wikipedia"
+        source: String = "wikipedia",
+        date: Date = Date()
     ) -> PlantRecord {
         let record = PlantRecord(context: context)
         record.id = UUID()
@@ -47,7 +48,7 @@ class CoreDataService {
         record.imageData = imageData
         record.latitude = latitude
         record.longitude = longitude
-        record.date = Date()
+        record.date = date
         record.growthLevel = 0
         record.confidence = confidence
         record.locationName = locationName

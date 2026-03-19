@@ -1,5 +1,7 @@
 import SwiftUI
 import CoreLocation
+import PhotosUI
+import ImageIO
 
 @Observable
 class ExploreViewModel {
@@ -11,6 +13,8 @@ class ExploreViewModel {
     var showResult = false
     var errorMessage: String?
     var isSaving = false
+    var showImagePicker = false
+    var discoveryDate: Date? // メタデータから取得した撮影日時
 
     let cameraService = CameraService()
     private let plantNetService = PlantNetService.shared
@@ -52,20 +56,37 @@ class ExploreViewModel {
 
     func registerPlant() async {
         guard let candidate = selectedCandidate,
-              let location = currentLocation,
               let image = capturedImage,
               let imageData = image.jpegData(compressionQuality: 0.8) else { return }
 
         isSaving = true
 
         do {
-            async let locationNameTask = locationService.reverseGeocode(location: location)
-            async let wikiInfoTask = WikipediaService.shared.fetchPlantInfo(scientificName: candidate.scientificName)
+            // 位置情報がある場合は逆ジオコーディング実行
+            let locationName: String
+            let latitude: Double
+            let longitude: Double
             
-            let locationName = try await locationNameTask
-            var wikiInfo = try await wikiInfoTask
+            if let location = currentLocation {
+                locationName = try await locationService.reverseGeocode(location: location)
+                latitude = location.coordinate.latitude
+                longitude = location.coordinate.longitude
+            } else {
+                // 位置情報がない場合
+                locationName = "不明"
+                latitude = 0.0
+                longitude = 0.0
+            }
+            
+            // 発見日を決定（メタデータから抽出した日時を使用、ない場合は今日）
+            let recordDate = discoveryDate ?? Date()
+            print("[ExploreVM] discoveryDate: \(discoveryDate?.description ?? "nil"), recordDate: \(recordDate)")
+            
+            // デバッグ：位置情報の確認
+            print("[ExploreVM] Location - latitude: \(latitude), longitude: \(longitude), locationName: \(locationName)")
+            
+            var wikiInfo = try await WikipediaService.shared.fetchPlantInfo(scientificName: candidate.scientificName)
 
-            // Wikipedia APIで「日本語名不明」となった場合、Mistralにフォールバック
             if wikiInfo.japaneseName == "日本語名不明" {
                 print("[ExploreVM] Wikipedia で日本語名不明 → Mistral にフォールバック")
                 do {
@@ -77,7 +98,6 @@ class ExploreViewModel {
                         source: "mistral"
                     )
                 } catch {
-                    // Mistralも失敗した場合は、Wikipediaの結果（「日本語名不明」）をそのまま使用
                     print("[ExploreVM] Mistral フォールバック失敗: \(error.localizedDescription)")
                 }
             } else {
@@ -88,13 +108,14 @@ class ExploreViewModel {
                 plantName: candidate.plantName,
                 scientificName: candidate.scientificName,
                 imageData: imageData,
-                latitude: location.coordinate.latitude,
-                longitude: location.coordinate.longitude,
+                latitude: latitude,
+                longitude: longitude,
                 locationName: locationName,
                 confidence: candidate.score,
                 japaneseName: wikiInfo.japaneseName,
                 description: wikiInfo.description,
-                source: wikiInfo.source
+                source: wikiInfo.source,
+                date: recordDate
             )
 
             resetState()
@@ -112,5 +133,35 @@ class ExploreViewModel {
         currentLocation = nil
         showResult = false
         errorMessage = nil
+        discoveryDate = nil
+    }
+
+    /// ギャラリーから選択した UIImage とメタデータを使用して識別
+    /// ギャラリーから選択した UIImage を識別
+    /// 発見日時は現在時刻、発見場所は不明にセット（後で詳細画面で手入力修正可能）
+    func identifyFromGalleryImage(_ image: UIImage) async {
+        print("[ExploreVM] identifyFromGalleryImage called")
+        capturedImage = image
+        isIdentifying = true
+        errorMessage = nil
+        currentLocation = nil
+        discoveryDate = Date()
+
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            errorMessage = "画像の変換に失敗しました"
+            isIdentifying = false
+            return
+        }
+
+        do {
+            let results = try await plantNetService.identify(imageData: imageData)
+            candidates = results
+            selectedCandidate = results.first
+            showResult = true
+            isIdentifying = false
+        } catch {
+            errorMessage = error.localizedDescription
+            isIdentifying = false
+        }
     }
 }

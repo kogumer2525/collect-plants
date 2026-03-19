@@ -10,7 +10,7 @@ struct PlantCandidate: Codable, Identifiable {
     let species: Species
 
     var plantName: String {
-        species.commonNames.first ?? species.scientificNameWithoutAuthor
+        (species.commonNames.first ?? species.scientificNameWithoutAuthor).removingSupplementalInfo
     }
 
     var scientificName: String {

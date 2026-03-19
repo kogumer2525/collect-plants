@@ -1,12 +1,32 @@
 import SwiftUI
+import PhotosUI
 
 struct ExploreView: View {
     @State private var viewModel = ExploreViewModel()
+    @State private var showImagePicker = false
 
     var body: some View {
         NavigationStack {
             ZStack {
-                if viewModel.showResult {
+                if viewModel.isIdentifying {
+                    // ローディング画面
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(AppTheme.darkGreen)
+                        
+                        VStack(spacing: 8) {
+                            Text("植物を識別中...")
+                                .font(.headline)
+                                .foregroundColor(AppTheme.darkGreen)
+                            Text("しばらくお待ちください")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AppTheme.background)
+                } else if viewModel.showResult {
                     resultView
                 } else {
                     cameraView
@@ -22,12 +42,23 @@ struct ExploreView: View {
             }
             .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .sheet(isPresented: $showImagePicker) {
+                ImagePickerView { image, phAsset in
+                    Task {
+                        // ギャラリーから選択した場合は、デフォルト値を使用
+                        // 発見日時は現在時刻、発見場所は不明
+                        // 後から詳細画面で手入力修正可能
+                        await viewModel.identifyFromGalleryImage(image)
+                        showImagePicker = false
+                    }
+                }
+            }
         }
     }
 
     private var cameraView: some View {
         ZStack {
-            CameraPreviewView(session: viewModel.cameraService.session)
+            CameraPreviewView(session: viewModel.cameraService.session, cameraService: viewModel.cameraService)
                 .ignoresSafeArea()
                 .onAppear {
                     viewModel.cameraService.startSession()
@@ -79,23 +110,49 @@ struct ExploreView: View {
                         .padding()
                 }
 
-                Button(action: {
-                    Task { await viewModel.captureAndIdentify() }
-                }) {
+                VStack {
+                    Spacer()
+                    
                     ZStack {
-                        Circle()
-                            .fill(AppTheme.primaryGradient)
-                            .frame(width: 80, height: 80)
-                            .shadow(color: AppTheme.accentGreen.opacity(0.5), radius: 8, x: 0, y: 4)
-                        Circle()
-                            .stroke(Color.white, lineWidth: 3)
-                            .frame(width: 70, height: 70)
-                        Image(systemName: "camera.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(.white)
+                        // 撮影ボタン（中央）
+                        Button(action: {
+                            Task { await viewModel.captureAndIdentify() }
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(AppTheme.primaryGradient)
+                                    .frame(width: 80, height: 80)
+                                    .shadow(color: AppTheme.accentGreen.opacity(0.5), radius: 8, x: 0, y: 4)
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 3)
+                                    .frame(width: 70, height: 70)
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 28))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .disabled(viewModel.isIdentifying)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        // ギャラリーボタン（右隅）
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                showImagePicker = true
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.2))
+                                        .frame(width: 60, height: 60)
+                                    Image(systemName: "photo.fill")
+                                        .font(.system(size: 22))
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .padding(.trailing, 24)
+                        }
                     }
                 }
-                .disabled(viewModel.isIdentifying)
                 .padding(.bottom, 36)
             }
         }

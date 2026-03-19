@@ -86,7 +86,7 @@ class WikipediaService {
         let description = try await fetchDescription(japaneseName: japaneseName)
 
         return WikipediaPlantInfo(
-            japaneseName: japaneseName,
+            japaneseName: japaneseName.removingSupplementalInfo,
             description: description,
             source: "wikipedia"
         )

@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import CoreData
 
 struct DictionaryView: View {
     @State private var viewModel = DictionaryViewModel()
@@ -150,6 +151,8 @@ struct PlantDetailView: View {
     @State private var currentPlant: PlantRecord
     @State private var viewModel: PlantDetailViewModel
     @State private var showFullScreenImage = false
+    @State private var showEditModal = false
+    @Environment(\.managedObjectContext) var managedObjectContext
 
     init(plant: PlantRecord, allPlants: [PlantRecord]) {
         self.allPlants = allPlants
@@ -261,6 +264,24 @@ struct PlantDetailView: View {
                 Text("植物図鑑")
                     .font(.headline)
                     .foregroundColor(AppTheme.darkGreen)
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {
+                    showEditModal = true
+                }) {
+                    Image(systemName: "slider.horizontal.3")
+                        .foregroundColor(AppTheme.darkGreen)
+                }
+            }
+        }
+        .sheet(isPresented: $showEditModal) {
+            PlantEditView(plant: $currentPlant)
+        }
+        .onChange(of: showEditModal) { oldValue, newValue in
+            // sheet が閉じた時（showEditModal が false になった時）、currentPlant をコア データから再度読み込み
+            if !newValue {
+                managedObjectContext.refresh(currentPlant, mergeChanges: true)
+                print("[PlantDetail] 編集完了 - UI を更新しました: \(currentPlant.locationName), \(currentPlant.date)")
             }
         }
         .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
