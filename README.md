@@ -1,31 +1,38 @@
-# Collect Plants
+# Pocket Garden
 
-散歩中に発見した植物を撮影・識別し、図鑑に登録・マップ表示・植物園展示ができるiOSアプリです。
+散歩中に植物を撮るだけで名前を判定し図鑑に登録！登録した植物の数に応じて庭に花が増え、歩数ポイントは庭に配置できるアイテムと交換できます。日常の散歩が「集めて育てる楽しさ」に変わり自然とモチベーションUP！植物の知識も付き、身近な自然への関心が高まるアプリです。
 
 ## 機能
 
 - **探す** - カメラで植物を撮影し、PlantNet AIで種類を識別
-- **図鑑** - 識別・登録した植物を一覧・詳細表示（一覧の並び替え、日本語名/英名表示、詳細の地図・写真拡大・前後移動・Wikipedia解説・編集）
-- **マップ** - 発見した植物を地図上にマッピング、歩数とポイント表示
-- **庭** - 登録した植物に応じてランダムに花が咲く庭園、動物来訪イベント
+- **情報取得** - 学名をもとにMediaWiki APIまたはMistral APIで日本語名と解説文を取得
+- **図鑑** - 識別・登録した植物を一覧・詳細表示（一日本語名/英名表示、解説文、地図・写真拡大・前後移動等）
+- **マップ** - 発見した植物を地図上にマッピング、HealthKitで取得した歩数とポイントの表示
+- **庭** - 登録した植物数に応じてランダムに花が咲く庭園、動物来訪イベント
 - **ショップ** - ポイントで家具を購入して庭に配置
 
 ## 技術スタック
 
 | 用途 | 技術 |
 |------|------|
+| 言語 | Swift |
 | UI | SwiftUI |
 | データ保存 | CoreData |
 | 地図 | MapKit |
 | 位置情報 | CoreLocation |
 | API通信 | URLSession |
 | 植物識別 | PlantNet API |
+| 植物情報取得 | MediaWiki API |
+| AI 植物情報取得 | Mistral API |
 | 歩数・ポイント | HealthKit |
 | カメラ | AVFoundation |
 
 ## アーキテクチャ
 
-MVVM を採用しています。
+MVVM (Model-View-ViewModel) を採用しています。
+- **Model** - データ構造とビジネスロジック（Models/ および Services/ に配置）
+- **View** - UI表示（Views/ に配置）
+- **ViewModel** - View と Model を仲介し、状態管理と処理ロジックを担当（ViewModels/ に配置）
 
 ## ファイル構成
 
@@ -100,8 +107,11 @@ collect_plants/
 1. リポジトリをクローン
 2. `Config/Debug.xcconfig.sample` を `Config/Debug.xcconfig` にコピー
 3. [PlantNet API](https://my.plantnet.org/) でAPIキーを取得
-4. `Debug.xcconfig` の `PLANTNET_API_KEY` にキーを設定
-5. Xcodeでプロジェクトを開いてビルド・実行
+4. [Mistral AI](https://console.mistral.ai/) でAPIキーを取得
+5. `Debug.xcconfig` に以下を設定：
+   - `PLANTNET_API_KEY` = PlantNet のAPIキー
+   - `MISTRAL_API_KEY` = Mistral のAPIキー
+6. Xcodeでプロジェクトを開いてビルド・実行
 
 ### Xcode の xcconfig 設定
 
