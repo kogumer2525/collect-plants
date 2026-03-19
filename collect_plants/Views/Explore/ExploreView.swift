@@ -81,7 +81,7 @@ struct ExploreView: View {
                             .clipShape(Circle())
                     }
                     .padding(.trailing, 16)
-                    .padding(.top, 8)
+                    .padding(.top, 18)
                 }
 
                 Spacer()
