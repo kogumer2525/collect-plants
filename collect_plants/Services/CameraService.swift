@@ -74,6 +74,50 @@ class CameraService: NSObject, ObservableObject {
             self.output.capturePhoto(with: settings, delegate: self)
         }
     }
+
+    func focusAtPoint(_ point: CGPoint, in frame: CGRect) {
+        //print("[Camera] フォーカス座標: \(point) / フレーム: \(frame)")
+        sessionQueue.async {
+            guard let inputs = self.session.inputs as? [AVCaptureDeviceInput],
+                  let device = inputs.first?.device else {
+                //print("[Camera] デバイスが見つかりませんでした")
+                return
+            }
+            
+            do {
+                try device.lockForConfiguration()
+                //print("[Camera] デバイス設定ロック成功")
+                
+                // タップ座標をデバイス座標系に変換
+                let focusPoint = CGPoint(
+                    x: point.y / frame.height,
+                    y: 1.0 - (point.x / frame.width)
+                )
+                //print("[Camera] 変換後のフォーカスポイント: \(focusPoint)")
+                
+                if device.isFocusPointOfInterestSupported && device.isFocusModeSupported(.autoFocus) {
+                    device.focusPointOfInterest = focusPoint
+                    device.focusMode = .autoFocus
+                    //print("[Camera] オートフォーカス設定完了")
+                } else {
+                    //print("[Camera] フォーカスポイント非対応またはオートフォーカス非対応")
+                }
+                
+                if device.isExposurePointOfInterestSupported && device.isExposureModeSupported(.autoExpose) {
+                    device.exposurePointOfInterest = focusPoint
+                    device.exposureMode = .autoExpose
+                    //print("[Camera] 自動露出設定完了")
+                } else {
+                    //print("[Camera] 露出ポイント非対応または自動露出非対応")
+                }
+                
+                device.unlockForConfiguration()
+                //print("[Camera] デバイス設定ロック解放完了")
+            } catch {
+                //print("[Camera] ピント設定エラー: \(error)")
+            }
+        }
+    }
 }
 
 extension CameraService: AVCapturePhotoCaptureDelegate {

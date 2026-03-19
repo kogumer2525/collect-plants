@@ -1,4 +1,5 @@
 import Foundation
+import CoreData
 
 enum SortOption {
     case japaneseNameAscending
@@ -28,8 +29,9 @@ class DictionaryViewModel {
     }
 
     var uniquePlants: [PlantRecord] {
+        let activePlants = plants.filter { !$0.isDeleted }
         var seen = Set<String>()
-        let filtered = plants.filter { plant in
+        let filtered = activePlants.filter { plant in
             let key = plant.plantName
             if seen.contains(key) { return false }
             seen.insert(key)

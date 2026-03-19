@@ -1,12 +1,14 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import CoreData
 
 struct DictionaryView: View {
     @State private var viewModel = DictionaryViewModel()
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             Group {
                 if viewModel.uniquePlants.isEmpty {
                     ZStack {
@@ -27,7 +29,7 @@ struct DictionaryView: View {
                     }
                 } else {
                     List(viewModel.uniquePlants) { plant in
-                        NavigationLink(destination: PlantDetailView(plant: plant, allPlants: viewModel.uniquePlants)) {
+                        NavigationLink(destination: PlantDetailView(plant: plant, allPlants: viewModel.uniquePlants, navigationPath: $navigationPath)) {
                             PlantRowView(plant: plant)
                         }
                         .listRowBackground(AppTheme.cardBackground)
@@ -150,9 +152,16 @@ struct PlantDetailView: View {
     @State private var currentPlant: PlantRecord
     @State private var viewModel: PlantDetailViewModel
     @State private var showFullScreenImage = false
+    @State private var showEditModal = false
+    @State private var showDeleteConfirmation = false
+    @State private var isDeleted = false
+    var externalNavigationPath: Binding<NavigationPath>?
+    @Environment(\.managedObjectContext) var managedObjectContext
+    @Environment(\.dismiss) var dismiss
 
-    init(plant: PlantRecord, allPlants: [PlantRecord]) {
+    init(plant: PlantRecord, allPlants: [PlantRecord], navigationPath: Binding<NavigationPath>? = nil) {
         self.allPlants = allPlants
+        self.externalNavigationPath = navigationPath
         _currentPlant = State(initialValue: plant)
         _viewModel = State(initialValue: PlantDetailViewModel(plant: plant))
     }
@@ -172,86 +181,92 @@ struct PlantDetailView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                bookView
-                    .padding(.horizontal, 8)
-                    .padding(.top, 8)
-                    .padding(.bottom, 8)
+        Group {
+            if isDeleted {
+                Color.clear
+            } else {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        bookView
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
+                            .padding(.bottom, 8)
 
-                // Attribution based on source
-                if currentPlant.source == "mistral" {
-                    // Mistral AI による説明
-                    VStack(spacing: 2) {
-                        Text("🤖 この説明文はMistral AIにより生成されています。")
-                            .font(.system(size: 8))
-                            .foregroundColor(.secondary)
-                        Text("Source: Mistral AI (Apache License 2.0)")
-                            .font(.system(size: 7))
-                            .foregroundColor(.secondary)
-                        Text("AI-generated content. Information may not be 100% accurate.")
-                            .font(.system(size: 7))
-                            .foregroundColor(.secondary)
+                        // Attribution based on source
+                        if currentPlant.source == "mistral" {
+                            // Mistral AI による説明
+                            VStack(spacing: 2) {
+                                Text("🤖 この説明文はMistral AIにより生成されています。")
+                                    .font(.system(size: 8))
+                                    .foregroundColor(.secondary)
+                                Text("Source: Mistral AI (Apache License 2.0)")
+                                    .font(.system(size: 7))
+                                    .foregroundColor(.secondary)
+                                Text("AI-generated content. Information may not be 100% accurate.")
+                                    .font(.system(size: 7))
+                                    .foregroundColor(.secondary)
+                            }
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
+                            .padding(.bottom, 12)
+                        } else if currentPlant.source == "wikipedia" || currentPlant.source.isEmpty {
+                            // Wikipedia による説明
+                            VStack(spacing: 2) {
+                                Text("📖 この説明文の一部はWikipediaの記事を元にしています。")
+                                    .font(.system(size: 8))
+                                    .foregroundColor(.secondary)
+                                Text("Source: Wikipedia (https://www.wikipedia.org/)")
+                                    .font(.system(size: 7))
+                                    .foregroundColor(.secondary)
+                                Text("Text is available under the Creative Commons Attribution-ShareAlike License (CC BY-SA).")
+                                    .font(.system(size: 7))
+                                    .foregroundColor(.secondary)
+                            }
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
+                            .padding(.bottom, 12)
+                        }
+
+                        // MARK: - Map Display
+                        locationMapView
+                            .frame(height: 140)
+                            .padding(.horizontal, 15)
+                            .padding(.top, 12)
+                            .padding(.bottom, 16)
+
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                moveToPreviousPlant()
+                            }) {
+                                Text("←")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(canMovePrevious ? .white : .secondary)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(canMovePrevious ? AppTheme.primaryGreen : AppTheme.cardBackground)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                            .disabled(!canMovePrevious)
+
+                            Button(action: {
+                                moveToNextPlant()
+                            }) {
+                                Text("→")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(canMoveNext ? .white : .secondary)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(canMoveNext ? AppTheme.primaryGreen : AppTheme.cardBackground)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                            .disabled(!canMoveNext)
+                        }
+                        .padding(.horizontal, 15)
+                        .padding(.bottom, 20)
                     }
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 8)
-                    .padding(.top, 8)
-                    .padding(.bottom, 12)
-                } else if currentPlant.source == "wikipedia" || currentPlant.source.isEmpty {
-                    // Wikipedia による説明
-                    VStack(spacing: 2) {
-                        Text("📖 この説明文の一部はWikipediaの記事を元にしています。")
-                            .font(.system(size: 8))
-                            .foregroundColor(.secondary)
-                        Text("Source: Wikipedia (https://www.wikipedia.org/)")
-                            .font(.system(size: 7))
-                            .foregroundColor(.secondary)
-                        Text("Text is available under the Creative Commons Attribution-ShareAlike License (CC BY-SA).")
-                            .font(.system(size: 7))
-                            .foregroundColor(.secondary)
-                    }
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 8)
-                    .padding(.top, 8)
-                    .padding(.bottom, 12)
                 }
-
-                // MARK: - Map Display
-                locationMapView
-                    .frame(height: 140)
-                    .padding(.horizontal, 15)
-                    .padding(.top, 12)
-                    .padding(.bottom, 16)
-
-                HStack(spacing: 12) {
-                    Button(action: {
-                        moveToPreviousPlant()
-                    }) {
-                        Text("←")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(canMovePrevious ? .white : .secondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(canMovePrevious ? AppTheme.primaryGreen : AppTheme.cardBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    .disabled(!canMovePrevious)
-
-                    Button(action: {
-                        moveToNextPlant()
-                    }) {
-                        Text("→")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(canMoveNext ? .white : .secondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(canMoveNext ? AppTheme.primaryGreen : AppTheme.cardBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    .disabled(!canMoveNext)
-                }
-                .padding(.horizontal, 15)
-                .padding(.bottom, 20)
             }
         }
         .background(AppTheme.background)
@@ -262,6 +277,34 @@ struct PlantDetailView: View {
                     .font(.headline)
                     .foregroundColor(AppTheme.darkGreen)
             }
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button(action: {
+                    showEditModal = true
+                }) {
+                    Image(systemName: "slider.horizontal.3")
+                        .foregroundColor(AppTheme.darkGreen)
+                }
+                Button(action: {
+                    showDeleteConfirmation = true
+                }) {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
+            }
+        }
+        .sheet(isPresented: $showEditModal) {
+            if isDeleted {
+                EmptyView()
+            } else {
+                PlantEditView(plant: $currentPlant)
+            }
+        }
+        .onChange(of: showEditModal) { oldValue, newValue in
+            // sheet が閉じた時（showEditModal が false になった時）、currentPlant をコア データから再度読み込み
+            if !newValue && !currentPlant.isDeleted {
+                managedObjectContext.refresh(currentPlant, mergeChanges: true)
+                print("[PlantDetail] 編集完了 - UI を更新しました: \(currentPlant.locationName), \(currentPlant.date)")
+            }
         }
         .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
@@ -270,6 +313,42 @@ struct PlantDetailView: View {
         }
         .fullScreenCover(isPresented: $showFullScreenImage) {
             FullScreenImageView(imageData: currentPlant.imageData, isPresented: $showFullScreenImage)
+        }
+        .alert("削除確認", isPresented: $showDeleteConfirmation) {
+            Button("キャンセル", role: .cancel) { }
+            Button("削除", role: .destructive) {
+                deletePlantRecord()
+            }
+        } message: {
+            Text("\(currentPlant.plantName)を削除しますか？")
+        }
+    }
+    
+    private func deletePlantRecord() {
+        let plantName = currentPlant.plantName
+        isDeleted = true
+        showEditModal = false
+        showFullScreenImage = false
+        
+        do {
+            // CoreData から削除
+            managedObjectContext.delete(currentPlant)
+            try managedObjectContext.save()
+            
+            print("[PlantDetail] 削除完了: \(plantName)")
+            NotificationCenter.default.post(name: .plantRecordsDidChange, object: nil)
+            
+            // 削除後、確実に一覧に戻る
+            if let navPath = externalNavigationPath {
+                // NavigationStack経由の場合
+                navPath.wrappedValue = NavigationPath()
+            } else {
+                // sheet経由の場合
+                dismiss()
+            }
+        } catch {
+            isDeleted = false
+            print("[PlantDetail] 削除エラー: \(error.localizedDescription)")
         }
     }
 
@@ -368,10 +447,8 @@ struct PlantDetailView: View {
 
     private var rightColumn: some View {
         VStack(alignment: .leading, spacing: 8) {
-            zukanInfoRow(icon: "mappin.circle.fill", label: "発見場所",
-                         value: currentPlant.locationName.isEmpty ? "不明" : currentPlant.locationName)
-            zukanInfoRow(icon: "calendar", label: "発見日",
-                         value: currentPlant.date.formatted(date: .long, time: .shortened))
+            locationInfoRow
+            dateInfoRow
 
             Divider()
                 .padding(.vertical, 4)
@@ -380,22 +457,35 @@ struct PlantDetailView: View {
                 .font(.custom("craftmincho", size: 15))
                 .foregroundColor(AppTheme.darkGreen)
 
-            ZStack(alignment: .topLeading) {
-                // Keep a stable description area height to prevent layout jumps.
-                Text(viewModel.isLoading ? "読み込み中..." : viewModel.plantDescription)
-                    .font(.custom("craftmincho", size: 11))
-                    .foregroundColor(.primary.opacity(0.85))
-                    .lineSpacing(3)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                }
-            }
-            .frame(height: 180, alignment: .top)
+            descriptionArea
         }
+    }
+
+    private var locationInfoRow: some View {
+        zukanInfoRow(icon: "mappin.circle.fill", label: "発見場所",
+                     value: currentPlant.locationName.isEmpty ? "不明" : currentPlant.locationName)
+    }
+
+    private var dateInfoRow: some View {
+        let dateString = currentPlant.date.formatted(date: .long, time: .omitted)
+        return zukanInfoRow(icon: "calendar", label: "発見日", value: dateString)
+    }
+
+    private var descriptionArea: some View {
+        ZStack(alignment: .topLeading) {
+            Text(viewModel.isLoading ? "読み込み中..." : viewModel.plantDescription)
+                .font(.custom("craftmincho", size: 11))
+                .foregroundColor(.primary.opacity(0.85))
+                .lineSpacing(3)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            }
+        }
+        .frame(height: 180, alignment: .top)
     }
 
     // MARK: - Helper

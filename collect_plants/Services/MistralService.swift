@@ -154,7 +154,7 @@ class MistralService {
             if let jsonResponse = try? decoder.decode(MistralJSONResponse.self, from: jsonData) {
                 print("[Mistral] 解析成功 - 日本語名: \(jsonResponse.japaneseName)")
                 return MistralPlantInfo(
-                    japaneseName: jsonResponse.japaneseName.isEmpty ? "不明" : jsonResponse.japaneseName,
+                    japaneseName: (jsonResponse.japaneseName.isEmpty ? "不明" : jsonResponse.japaneseName).removingSupplementalInfo,
                     description: jsonResponse.description.isEmpty ? "情報を取得できませんでした" : jsonResponse.description
                 )
             }

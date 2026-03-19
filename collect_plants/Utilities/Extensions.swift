@@ -37,4 +37,30 @@ extension String {
         CFStringTransform(mutable, nil, kCFStringTransformHiraganaKatakana, false)
         return String(mutable)
     }
+    
+    /// 括弧内の補足情報を削除します（例：「ボケ（接ギホボケ）」 → 「ボケ」）
+    var removingSupplementalInfo: String {
+        // 全角括弧と半角括弧の両方に対応
+        let fullWidthPattern = "（[^）]*）"
+        let halfWidthPattern = "\\([^)]*\\)"
+        
+        var result = self
+        if let regex = try? NSRegularExpression(pattern: fullWidthPattern, options: []) {
+            result = regex.stringByReplacingMatches(
+                in: result,
+                options: [],
+                range: NSRange(result.startIndex..., in: result),
+                withTemplate: ""
+            )
+        }
+        if let regex = try? NSRegularExpression(pattern: halfWidthPattern, options: []) {
+            result = regex.stringByReplacingMatches(
+                in: result,
+                options: [],
+                range: NSRange(result.startIndex..., in: result),
+                withTemplate: ""
+            )
+        }
+        return result.trimmingCharacters(in: .whitespaces)
+    }
 }

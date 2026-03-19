@@ -10,5 +10,11 @@
 	<array>
 		<string>craftmincho.otf</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>植物を撮影して識別するためにカメラを使用します</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ギャラリーから写真を選択して植物を識別するために写真ライブラリにアクセスします</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>発見した植物の位置情報を記録するために位置情報を使用します</string>
 </dict>
 </plist>

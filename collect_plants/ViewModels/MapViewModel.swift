@@ -21,7 +21,9 @@ class MapViewModel {
     var stepHistory: [(Date, Int)] = []
 
     func loadPlants() {
-        plants = coreDataService.fetchAllPlants()
+        let allPlants = coreDataService.fetchAllPlants()
+        // 位置情報が「不明」（座標 (0, 0)）のレコードを除外
+        plants = allPlants.filter { !($0.latitude == 0.0 && $0.longitude == 0.0) }
         if let location = locationService.currentLocation {
             region = MKCoordinateRegion(
                 center: location.coordinate,
