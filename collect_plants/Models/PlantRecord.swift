@@ -14,6 +14,8 @@ public class PlantRecord: NSManagedObject, Identifiable {
     @NSManaged public var confidence: Double
     @NSManaged public var locationName: String
     @NSManaged public var japaneseName: String
+    @NSManaged public var plantDescription: String
+    @NSManaged public var source: String
 }
 
 extension PlantRecord {

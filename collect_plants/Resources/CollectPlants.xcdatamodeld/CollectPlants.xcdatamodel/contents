@@ -4,6 +4,7 @@
         <attribute name="confidence" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="growthLevel" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="plantDescription" attributeType="String" defaultValueString=""/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="imageData" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
         <attribute name="japaneseName" attributeType="String" defaultValueString=""/>
@@ -12,6 +13,7 @@
         <attribute name="longitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="plantName" attributeType="String" defaultValueString=""/>
         <attribute name="scientificName" attributeType="String" defaultValueString=""/>
+        <attribute name="source" attributeType="String" defaultValueString="wikipedia"/>
     </entity>
     <entity name="AnimalRecord" representedClassName="AnimalRecord" syncable="YES">
         <attribute name="animalDescription" attributeType="String" defaultValueString=""/>

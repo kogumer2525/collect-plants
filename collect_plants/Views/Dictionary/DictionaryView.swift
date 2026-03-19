@@ -179,22 +179,42 @@ struct PlantDetailView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 8)
 
-                // Wikipedia Attribution
-                VStack(spacing: 2) {
-                    Text("この説明文の一部はWikipediaの記事を元にしています。")
-                        .font(.system(size: 8))
-                        .foregroundColor(.secondary)
-                    Text("Source: Wikipedia (https://www.wikipedia.org/)")
-                        .font(.system(size: 7))
-                        .foregroundColor(.secondary)
-                    Text("Text is available under the Creative Commons Attribution-ShareAlike License (CC BY-SA).")
-                        .font(.system(size: 7))
-                        .foregroundColor(.secondary)
+                // Attribution based on source
+                if currentPlant.source == "mistral" {
+                    // Mistral AI による説明
+                    VStack(spacing: 2) {
+                        Text("🤖 この説明文はMistral AIにより生成されています。")
+                            .font(.system(size: 8))
+                            .foregroundColor(.secondary)
+                        Text("Source: Mistral AI (Apache License 2.0)")
+                            .font(.system(size: 7))
+                            .foregroundColor(.secondary)
+                        Text("AI-generated content. Information may not be 100% accurate.")
+                            .font(.system(size: 7))
+                            .foregroundColor(.secondary)
+                    }
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 8)
+                    .padding(.top, 8)
+                    .padding(.bottom, 12)
+                } else if currentPlant.source == "wikipedia" || currentPlant.source.isEmpty {
+                    // Wikipedia による説明
+                    VStack(spacing: 2) {
+                        Text("📖 この説明文の一部はWikipediaの記事を元にしています。")
+                            .font(.system(size: 8))
+                            .foregroundColor(.secondary)
+                        Text("Source: Wikipedia (https://www.wikipedia.org/)")
+                            .font(.system(size: 7))
+                            .foregroundColor(.secondary)
+                        Text("Text is available under the Creative Commons Attribution-ShareAlike License (CC BY-SA).")
+                            .font(.system(size: 7))
+                            .foregroundColor(.secondary)
+                    }
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 8)
+                    .padding(.top, 8)
+                    .padding(.bottom, 12)
                 }
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 8)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
 
                 // MARK: - Map Display
                 locationMapView
@@ -245,8 +265,8 @@ struct PlantDetailView: View {
         }
         .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .task {
-            await viewModel.fetchWikipediaInfo()
+        .onAppear {
+            viewModel.loadPlantInfo()
         }
         .fullScreenCover(isPresented: $showFullScreenImage) {
             FullScreenImageView(imageData: currentPlant.imageData, isPresented: $showFullScreenImage)
@@ -260,9 +280,7 @@ struct PlantDetailView: View {
         let nextPlant = allPlants[currentIndex - 1]
         currentPlant = nextPlant
         viewModel = PlantDetailViewModel(plant: nextPlant)
-        Task {
-            await viewModel.fetchWikipediaInfo()
-        }
+        viewModel.loadPlantInfo()
     }
 
     private func moveToNextPlant() {
@@ -270,9 +288,7 @@ struct PlantDetailView: View {
         let nextPlant = allPlants[currentIndex + 1]
         currentPlant = nextPlant
         viewModel = PlantDetailViewModel(plant: nextPlant)
-        Task {
-            await viewModel.fetchWikipediaInfo()
-        }
+        viewModel.loadPlantInfo()
     }
 
     private var bookView: some View {
@@ -289,6 +305,7 @@ struct PlantDetailView: View {
                 .padding(.trailing, 32)
                 .padding(.vertical, 18)
         }
+        .frame(height: 350)
         .background(
             Image("zukan_back")
                 .resizable()
@@ -303,10 +320,10 @@ struct PlantDetailView: View {
     private var leftColumn: some View {
         VStack(spacing: 6) {
             Text(viewModel.japaneseName.isEmpty ? " " : viewModel.japaneseName.hiraganaToKatakana)
-                .font(.custom("craftmincho", size: 20))
+                .font(.custom("craftmincho", size: 16))
                 .foregroundColor(AppTheme.darkGreen)
                 .lineLimit(1)
-                .frame(height: 24)
+                .frame(height: 20)
                 .opacity(viewModel.japaneseName.isEmpty ? 0 : 1)
 
             if let uiImage = UIImage(data: currentPlant.imageData) {
@@ -327,7 +344,7 @@ struct PlantDetailView: View {
             }
 
             Text(currentPlant.plantName)
-                .font(.custom("craftmincho", size: 18))
+                .font(.custom("craftmincho", size: 15))
                 .foregroundColor(AppTheme.darkGreen)
 
             Text(currentPlant.scientificName)

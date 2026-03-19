@@ -13,6 +13,13 @@ struct ExploreView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("探す")
+                        .font(.headline)
+                        .foregroundColor(AppTheme.darkGreen)
+                }
+            }
             .toolbarBackground(AppTheme.cardBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
@@ -183,6 +190,28 @@ struct ExploreView: View {
                         }
                     }
                 }
+
+                // PlantNet Attribution
+                VStack(spacing: 10) {
+                    if let image = UIImage(named: "plantnet_logo") {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 40)
+                    }
+                    
+                    Text("The image-based plant species identification service used, is based on the Pl@ntNet recognition API, regularly updated and accessible through the site https://my.plantnet.org/")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(nil)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(AppTheme.cardBackground)
+                .cornerRadius(AppTheme.cornerRadius)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
 
                 HStack(spacing: 16) {
                     Button("キャンセル") {
