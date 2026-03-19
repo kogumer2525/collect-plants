@@ -3,7 +3,6 @@ import Foundation
 @Observable
 class GardenViewModel {
     var plants: [PlantRecord] = []
-    var visitingAnimal: String?
     var totalPoints: Int = 0
     var ownedFurnitureIDs: Set<String> = []
     var gardenCritters: [GardenCritter] = []
@@ -54,9 +53,7 @@ class GardenViewModel {
         plants = coreDataService.fetchAllPlants()
         totalPoints = pointManager.getTotalPoints()
         ownedFurnitureIDs = coreDataService.ownedFurnitureIDs()
-        let uniqueCount = coreDataService.uniquePlantCount()
-        animalEventService.checkForAnimalVisit(plantSpeciesCount: uniqueCount, level: level)
-        visitingAnimal = animalEventService.visitingAnimal
+        animalEventService.updateCritters(level: level)
         gardenCritters = animalEventService.gardenCritters
     }
 

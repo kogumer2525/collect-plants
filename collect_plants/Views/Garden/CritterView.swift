@@ -1,24 +1,68 @@
 import SwiftUI
 
-// MARK: - スプライトストリップアニメーション
+// MARK: - スプライトストリップアニメーション（boar, stag 用）
 /// 横一列に並んだスプライトストリップ画像を1フレームずつ切り出して表示する
+/// 画像の実際のピクセル寸法からフレーム幅を算出する
 struct SpriteStripView: View {
     let assetName: String
     let frameCount: Int
-    let frameHeight: CGFloat
     let currentFrame: Int
-    let displaySize: CGFloat
+    let displayHeight: CGFloat
 
     var body: some View {
-        if UIImage(named: assetName) != nil {
-            let stripWidth = displaySize * CGFloat(frameCount)
+        if let uiImage = UIImage(named: assetName) {
+            // 実際の画像サイズからフレーム1枚の幅を算出
+            let imgW = uiImage.size.width
+            let imgH = uiImage.size.height
+            let frameW = imgW / CGFloat(frameCount)
+            let aspect = frameW / imgH  // フレームのアスペクト比（幅/高さ）
+            let displayW = displayHeight * aspect
+
+            let stripWidth = displayW * CGFloat(frameCount)
 
             Image(assetName)
                 .resizable()
                 .interpolation(.none)
-                .frame(width: stripWidth, height: displaySize)
-                .offset(x: -CGFloat(currentFrame) * displaySize + stripWidth / 2 - displaySize / 2)
-                .frame(width: displaySize, height: displaySize)
+                .frame(width: stripWidth, height: displayHeight)
+                .offset(x: -CGFloat(currentFrame) * displayW + stripWidth / 2 - displayW / 2)
+                .frame(width: displayW, height: displayHeight)
+                .clipped()
+        }
+    }
+}
+
+// MARK: - スプライトシートアニメーション（wolf 用）
+/// グリッド状に並んだスプライトシートから特定の行・列のフレームを表示する
+/// 画像の実際のピクセル寸法からフレームサイズを算出する
+struct SpriteSheetView: View {
+    let assetName: String
+    let columns: Int
+    let rows: Int
+    let currentFrame: Int
+    let row: Int
+    let displayHeight: CGFloat
+
+    var body: some View {
+        if let uiImage = UIImage(named: assetName) {
+            let imgW = uiImage.size.width
+            let imgH = uiImage.size.height
+            let frameW = imgW / CGFloat(columns)
+            let frameH = imgH / CGFloat(rows)
+            let aspect = frameW / frameH
+            let displayW = displayHeight * aspect
+
+            let sheetWidth = displayW * CGFloat(columns)
+            let sheetHeight = displayHeight * CGFloat(rows)
+
+            Image(assetName)
+                .resizable()
+                .interpolation(.none)
+                .frame(width: sheetWidth, height: sheetHeight)
+                .offset(
+                    x: -CGFloat(currentFrame) * displayW + sheetWidth / 2 - displayW / 2,
+                    y: -CGFloat(row) * displayHeight + sheetHeight / 2 - displayHeight / 2
+                )
+                .frame(width: displayW, height: displayHeight)
                 .clipped()
         }
     }
@@ -27,46 +71,57 @@ struct SpriteStripView: View {
 // MARK: - 動物1体の表示・アニメーション・移動を管理
 struct CritterView: View {
     let critter: GardenCritter
-    let dirtTilePositions: [(x: CGFloat, y: CGFloat)]
+    let walkableTilePositions: [(x: CGFloat, y: CGFloat)]
     let tileSize: CGFloat
 
     @State private var currentFrame: Int = 0
     @State private var animation: CritterAnimation = .idle
     @State private var direction: CritterDirection = .SE
     @State private var position: CGPoint = .zero
-    @State private var targetPosition: CGPoint = .zero
     @State private var isInitialized = false
 
     private let animationInterval: TimeInterval = 0.15
-    private let moveInterval: TimeInterval = 9.0
+    /// 隣接タイル1つへの移動時間（ゆっくり）
+    private let stepDuration: TimeInterval = 3.0
 
     var body: some View {
-        let assetName = critter.type.assetName(direction: direction, animation: animation)
-        let frameCount = critter.type.frameCount(for: animation)
-        let displaySize = tileSize * 0.7
+        let displayH = tileSize * 0.7 * critter.type.displayScale
 
-        let flipX = (direction == .NE || direction == .SE)
+        Group {
+            switch critter.type.spriteFormat {
+            case .strip:
+                SpriteStripView(
+                    assetName: critter.type.stripAssetName(direction: direction, animation: animation),
+                    frameCount: critter.type.frameCount(for: animation),
+                    currentFrame: currentFrame,
+                    displayHeight: displayH
+                )
 
-        SpriteStripView(
-            assetName: assetName,
-            frameCount: frameCount,
-            frameHeight: critter.type.frameHeight,
-            currentFrame: currentFrame,
-            displaySize: displaySize
-        )
-        .scaleEffect(x: flipX ? -1 : 1, y: 1)
+            case .sheet:
+                SpriteSheetView(
+                    assetName: critter.type.sheetAssetName(animation: animation),
+                    columns: critter.type.sheetColumns(for: animation),
+                    rows: 4,
+                    currentFrame: currentFrame,
+                    row: direction.wolfRow,
+                    displayHeight: displayH
+                )
+            }
+        }
         .position(position)
         .onAppear {
             guard !isInitialized else { return }
             isInitialized = true
-            // 初期位置をランダムなdirtタイルに設定
-            var rng = SeededRandomNumberGenerator(seed: UInt64(critter.id * 77 + 13))
-            if let startTile = dirtTilePositions.randomElement(using: &rng) {
-                position = CGPoint(x: startTile.x, y: startTile.y)
-                targetPosition = position
+            if !walkableTilePositions.isEmpty {
+                let index = Int.random(in: 0..<walkableTilePositions.count)
+                let tile = walkableTilePositions[index]
+                position = CGPoint(x: tile.x, y: tile.y)
             }
             startAnimationTimer()
-            startMovementTimer()
+            let initialDelay = Double(critter.id) * 0.8 + 1.0
+            DispatchQueue.main.asyncAfter(deadline: .now() + initialDelay) {
+                stepToNeighbor()
+            }
         }
     }
 
@@ -77,36 +132,38 @@ struct CritterView: View {
         }
     }
 
-    private func startMovementTimer() {
-        let initialDelay = Double(critter.id) * 0.8 + 1.0
-        DispatchQueue.main.asyncAfter(deadline: .now() + initialDelay) {
-            moveToNextTile()
-        }
-    }
+    /// 隣接する歩行可能タイルに1歩だけ移動する
+    /// タイル間を直線で結ぶので、隣接タイルなら経路上に非歩行タイルを通らない
+    private func stepToNeighbor() {
+        guard !walkableTilePositions.isEmpty else { return }
 
-    private func moveToNextTile() {
-        guard !dirtTilePositions.isEmpty else { return }
-
-        let nearbyTiles = dirtTilePositions.filter { tile in
+        // 隣接タイル = 距離が tileSize * 1.2 以内（斜め隣接含む）
+        let maxNeighborDist = tileSize * 1.2
+        let neighbors = walkableTilePositions.filter { tile in
             let dx = tile.x - position.x
             let dy = tile.y - position.y
             let dist = sqrt(dx * dx + dy * dy)
-            return dist > 5 && dist < tileSize * 3
+            return dist > 1 && dist <= maxNeighborDist
         }
 
-        let target: (x: CGFloat, y: CGFloat)
-        if let nearby = nearbyTiles.randomElement() {
-            target = nearby
-        } else if let any = dirtTilePositions.randomElement() {
-            target = any
-        } else {
+        guard let target = neighbors.randomElement() else {
+            // 隣接がない場合（孤立タイル）→ 最も近いタイルにジャンプ
+            if let closest = walkableTilePositions
+                .filter({ sqrt(pow($0.x - position.x, 2) + pow($0.y - position.y, 2)) > 1 })
+                .min(by: { sqrt(pow($0.x - position.x, 2) + pow($0.y - position.y, 2)) < sqrt(pow($1.x - position.x, 2) + pow($1.y - position.y, 2)) }) {
+                position = CGPoint(x: closest.x, y: closest.y)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + stepDuration) {
+                stepToNeighbor()
+            }
             return
         }
 
-        targetPosition = CGPoint(x: target.x, y: target.y)
+        let nextPos = CGPoint(x: target.x, y: target.y)
 
-        let dx = targetPosition.x - position.x
-        let dy = targetPosition.y - position.y
+        // 移動方向から向きを決定
+        let dx = nextPos.x - position.x
+        let dy = nextPos.y - position.y
         if dx > 0 && dy > 0 {
             direction = .SE
         } else if dx > 0 && dy <= 0 {
@@ -120,13 +177,13 @@ struct CritterView: View {
         animation = .walk
         currentFrame = 0
 
-        withAnimation(.easeInOut(duration: moveInterval)) {
-            position = targetPosition
+        withAnimation(.linear(duration: stepDuration)) {
+            position = nextPos
         }
 
-        // 到着後すぐ次の移動へ（停止なし）
-        DispatchQueue.main.asyncAfter(deadline: .now() + moveInterval) {
-            moveToNextTile()
+        // 1歩完了後、すぐ次の1歩へ（停止なし）
+        DispatchQueue.main.asyncAfter(deadline: .now() + stepDuration) {
+            stepToNeighbor()
         }
     }
 }

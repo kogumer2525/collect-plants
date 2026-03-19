@@ -387,7 +387,7 @@ struct GardenGridView: View {
             let offsetY = (screenH - gridHeight) / 2
 
             let plants = plantGrid
-            let dirtPositions = walkableTilePositions(tileW: tileW, tileH: tileH, rowStep: rowStep, offsetY: offsetY)
+            let walkPositions = walkableTilePositions(tileW: tileW, tileH: tileH, rowStep: rowStep, offsetY: offsetY)
 
             ZStack(alignment: .topLeading) {
                 // 地面・デコレーション・花レイヤー
@@ -442,7 +442,7 @@ struct GardenGridView: View {
                 ForEach(critters) { critter in
                     CritterView(
                         critter: critter,
-                        dirtTilePositions: dirtPositions,
+                        walkableTilePositions: walkPositions,
                         tileSize: tileImgSize
                     )
                 }
@@ -452,8 +452,40 @@ struct GardenGridView: View {
         }
     }
 
-    /// dirtタイルの画面座標一覧（動物の移動先候補）
+    /// 歩行可能タイルの画面座標一覧（動物の移動先候補）
+    /// - GL・Pタイルのうち、画面に見える範囲のみ（見切れ端を除外）
+    /// - 家具の表示領域と重なるタイルを除外（画面座標ベースで判定）
     private func walkableTilePositions(tileW: CGFloat, tileH: CGFloat, rowStep: CGFloat, offsetY: CGFloat) -> [(x: CGFloat, y: CGFloat)] {
+        // 家具の表示矩形を画面座標で計算（動物がこの範囲に入らないようにする）
+        struct FurnitureRect {
+            let minX: CGFloat, maxX: CGFloat, minY: CGFloat, maxY: CGFloat
+        }
+        let furnitureRects: [FurnitureRect] = Furniture.allItems
+            .filter { ownedFurnitureIDs.contains($0.id) }
+            .map { f in
+                let isOdd = f.gardenRow % 2 == 1
+                let xOff: CGFloat = isOdd ? 0 : -tileW / 2
+                let fx = xOff + CGFloat(f.gardenCol) * tileW + tileW / 2
+                let fy = offsetY + CGFloat(f.gardenRow) * rowStep + tileH / 2
+                let fw = tileW * f.widthInTiles
+                let fh = fw * 1.5  // 画像アスペクト比
+                // 家具の中心は (fx, fy - fw/2)、サイズは fw x fh
+                let centerY = fy - fw / 2
+                return FurnitureRect(
+                    minX: fx - fw / 2, maxX: fx + fw / 2,
+                    minY: centerY - fh / 2, maxY: centerY + fh / 2
+                )
+            }
+
+        // GBに隣接するタイルを除外するためのヘルパー
+        func isNotBush(row r: Int, col c: Int) -> Bool {
+            guard r >= 0 && r < rows else { return false }
+            let isOdd = r % 2 == 1
+            let cc = isOdd ? cols - 1 : cols
+            guard c >= 0 && c < cc else { return false }
+            return gardenLayoutMap[r][c] != .grassBush
+        }
+
         var positions: [(x: CGFloat, y: CGFloat)] = []
         let topMargin = 13
         let bottomMargin = rows - 44
@@ -461,12 +493,29 @@ struct GardenGridView: View {
             let isOdd = row % 2 == 1
             let colCount = isOdd ? cols - 1 : cols
             let xOffset: CGFloat = isOdd ? 0 : -tileW / 2
-            for col in 1..<(colCount - 1) {
-                if gardenLayoutMap[row][col].canWalk {
-                    let x = xOffset + CGFloat(col) * tileW + tileW / 2
-                    let y = offsetY + CGFloat(row) * rowStep + tileH / 2
-                    positions.append((x, y))
+
+            // 端の見切れ列を除外
+            let colStart = isOdd ? 1 : 2
+            let colEnd = isOdd ? colCount - 1 : colCount - 2
+
+            for col in colStart..<colEnd {
+                guard gardenLayoutMap[row][col].canWalk else { continue }
+
+                // 下側にGBがあるタイルを除外（茂みに突っ込んで見えるのを防ぐ）
+                if !isNotBush(row: row + 1, col: col) { continue }
+
+                let x = xOffset + CGFloat(col) * tileW + tileW / 2
+                let y = offsetY + CGFloat(row) * rowStep + tileH / 2
+
+                // 家具の表示領域と重なるか判定（タイトめに判定）
+                let margin = tileW * 0.1
+                let overlaps = furnitureRects.contains { rect in
+                    x > rect.minX - margin && x < rect.maxX + margin &&
+                    y > rect.minY - margin && y < rect.maxY + margin
                 }
+                if overlaps { continue }
+
+                positions.append((x, y))
             }
         }
         return positions
